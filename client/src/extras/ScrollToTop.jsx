@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 
 const ScrollToTop = () => {
@@ -19,7 +19,7 @@ const ScrollToTop = () => {
   };
 
   return (
-    <motion.button
+    <Motion.button
       onClick={scrollToTop}
       initial={{ opacity: 0, scale: 0.5 }}
       animate={isVisible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }}
@@ -35,13 +35,13 @@ const ScrollToTop = () => {
                  border border-yellow-300 backdrop-blur-lg bg-opacity-30"
       aria-label="Scroll to top"
     >
-      <motion.div
+      <Motion.div
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
       >
         <ArrowUp className="w-7 h-7 text-white" />
-      </motion.div>
-    </motion.button>
+      </Motion.div>
+    </Motion.button>
   );
 };
 
