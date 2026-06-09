@@ -1,6 +1,5 @@
 import {
   CircleUser,
-  Search,
   ShoppingCart,
   Menu,
   X,
@@ -11,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "@/store/auth-slice/user";
+import SearchBar from "./SearchBar";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 
@@ -21,7 +21,6 @@ function Header() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,16 +70,6 @@ function Header() {
         duration: 0.6,
         ease: "easeInOut",
       },
-    },
-  };
-
-  const searchVariants = {
-    initial: { width: "100%", opacity: 0.9 },
-    focused: {
-      width: "110%",
-      opacity: 1,
-      boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.3)",
-      transition: { duration: 0.3 },
     },
   };
 
@@ -172,41 +161,7 @@ function Header() {
           </motion.div>
 
           <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
-            <motion.div
-              variants={searchVariants}
-              initial="initial"
-              animate={searchFocused ? "focused" : "initial"}
-              className="relative w-full"
-            >
-              <div className="flex items-center bg-white/95 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-white/20">
-                <input
-                  type="text"
-                  placeholder="Search for products..."
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                  className="flex-grow outline-none bg-transparent text-sm text-gray-800 placeholder-gray-500 font-medium"
-                />
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 15 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="cursor-pointer"
-                >
-                  <Search className="text-blue-500 w-5 h-5" />
-                </motion.div>
-              </div>
-              {searchFocused && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-2"
-                >
-                  <div className="text-sm text-gray-600 p-3">
-                    Recent searches will appear here...
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
+            <SearchBar variant="desktop" />
           </div>
 
           <div className="hidden lg:flex items-center gap-8">
@@ -343,14 +298,7 @@ function Header() {
                 transition={{ delay: 0.1 }}
                 className="relative"
               >
-                <div className="flex items-center bg-white/95 backdrop-blur-sm rounded-full px-4 py-3 shadow-lg border border-white/20">
-                  <input
-                    type="text"
-                    placeholder="Search for products..."
-                    className="flex-grow outline-none bg-transparent text-sm text-gray-800 placeholder-gray-500 font-medium"
-                  />
-                  <Search className="text-blue-500 w-5 h-5" />
-                </div>
+                <SearchBar variant="mobile" />
               </motion.div>
 
               <div className="space-y-4">
