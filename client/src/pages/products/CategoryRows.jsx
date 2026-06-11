@@ -207,7 +207,7 @@ const CategoryRows = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-12  mb-18">
               {selectedCategories.map((category, categoryIndex) => {
                 const categoryParts = getPartsByCategory(category);
                 return (
@@ -216,7 +216,7 @@ const CategoryRows = () => {
                     variants={categoryVariants}
                     className="relative"
                   >
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-6 ">
                       <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -226,7 +226,7 @@ const CategoryRows = () => {
                         }}
                         className="flex items-center space-x-4"
                       >
-                        <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-400 rounded-full"></div>
+                        <div className="w-1 h-8 bg-gradient-to-b  from-blue-500 to-blue-400 rounded-full"></div>
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
                           {category}
                         </h2>
@@ -258,7 +258,7 @@ const CategoryRows = () => {
                         </p>
                       </motion.div>
                     ) : (
-                      <div className="relative">
+                      <div className="relative  p-1 mb-10">
                         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50 pb-4">
                           <motion.div
                             initial={{ opacity: 0 }}

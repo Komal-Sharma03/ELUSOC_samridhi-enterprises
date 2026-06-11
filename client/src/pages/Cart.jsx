@@ -206,10 +206,10 @@ const Cart = () => {
           transition={{ duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] }}
           className="text-center lg:text-left mb-10"
         >
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl sm:text-5xl  lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600">
+          <p className="text-lg sm:text-xl  text-gray-600">
             {cart.items.length} {cart.items.length === 1 ? "item" : "items"} in
             your cart
           </p>

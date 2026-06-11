@@ -73,7 +73,7 @@ export default function BrandList() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-2xl md:text-3xl font-bold mb-6 text-blue-500 text-center"
+        className="text-12xl md:text-3xl font-bold mb-4 text-blue-500 text-center"
       >
         Top Brands
       </motion.h2>
@@ -102,7 +102,7 @@ export default function BrandList() {
 
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2"
+        className="flex gap-4 overflow-x-auto no-scrollbar justify-center scroll-smooth pb-2"
       >
         {sortedBrands.map((brand) => (
           <motion.div

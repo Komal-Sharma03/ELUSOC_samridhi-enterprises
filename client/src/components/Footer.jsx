@@ -167,7 +167,7 @@ const Footer = () => {
         transition={{ duration: 1.2, delay: 0.3 }}
         className="relative z-10 py-20 px-4 sm:px-6 lg:px-8"
       >
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto ">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

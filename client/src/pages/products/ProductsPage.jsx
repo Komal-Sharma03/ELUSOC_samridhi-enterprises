@@ -256,7 +256,7 @@ const ProductsPage = () => {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gray-100 mt-18">
+    <div className="min-h-screen bg-gray-100 mt-22  mb-16">
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -580,7 +580,7 @@ const ProductsPage = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.1 }}
-                        className="object-fit w-full h-48 sm:h-40 rounded-t-lg"
+                        className="object-cover w-full h-48 sm:h-40 rounded-t-lg"
                       />
                     </div>
                     <div className="p-3 sm:p-4 flex-1">

@@ -54,13 +54,13 @@ const MyProfile = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 py-12 px-4 sm:px-8 lg:px-16"
+      className="min-h-screen bg-gradient-to-br  from-blue-50 via-white to-blue-100 py-12 px-4 sm:px-8 lg:px-16"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <MediData title="My Profile | Samridhi Enterprises" />
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto mb-20 mt-20">
         <div className="text-center mb-12">
           <motion.h1
             className="text-4xl sm:text-5xl font-serif font-bold text-blue-500 tracking-tight"

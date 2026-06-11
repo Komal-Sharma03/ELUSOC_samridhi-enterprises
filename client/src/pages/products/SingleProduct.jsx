@@ -175,13 +175,13 @@ const SingleProduct = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br  from-blue-50 to-white flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center p-8 bg-white rounded-2xl shadow-xl"
         >
-          <div className="w-20 h-20 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+          <div className="w-20  h-20 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
             <svg
               className="w-10 h-10 text-red-500"
               fill="none"
@@ -210,8 +210,8 @@ const SingleProduct = () => {
   const stockStatus = getStockStatus();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 mt-15">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br  from-blue-50 via-white to-blue-50 mt-15">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8  mt-20 mb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
