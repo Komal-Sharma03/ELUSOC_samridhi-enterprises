@@ -274,3 +274,63 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
     order,
   });
 });
+
+
+// PUT /api/orders/admin/status/:id  (auth, admin)  body: { orderStatus }
+// Advances an order through its fulfilment lifecycle (Confirmed -> Processing
+// -> Shipped -> Delivered, or Cancelled). Payment verification is handled
+// separately by adminVerifyPayment; this endpoint is purely operational and
+// only accepts the post-confirmation statuses so a pending-verification order
+// cannot be pushed straight to Shipped without its payment being approved.
+const FULFILLMENT_STATUSES = [
+  "Confirmed",
+  "Processing",
+  "Shipped",
+  "Delivered",
+  "Cancelled",
+];
+
+export const adminUpdateOrderStatus = catchAsyncErrors(
+  async (req, res, next) => {
+    const { orderStatus } = req.body;
+
+    if (!FULFILLMENT_STATUSES.includes(orderStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `orderStatus must be one of: ${FULFILLMENT_STATUSES.join(", ")}`,
+      });
+    }
+
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    // Guard: an order whose payment has not succeeded should not be marked as
+    // physically fulfilled. It can still be Cancelled.
+    if (
+      order.paymentStatus !== "Success" &&
+      ["Processing", "Shipped", "Delivered"].includes(orderStatus)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot advance fulfilment until the order's payment is verified",
+      });
+    }
+
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Order status updated to ${orderStatus}`,
+      order,
+    });
+  }
+);

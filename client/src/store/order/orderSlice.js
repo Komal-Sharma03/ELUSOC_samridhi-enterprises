@@ -94,6 +94,55 @@ export const adminVerifyPayment = createAsyncThunk(
   }
 );
 
+// Admin — dashboard analytics (real data)
+export const adminGetDashboardAnalytics = createAsyncThunk(
+  "order/adminAnalytics",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_URL}/admin/analytics`,
+        authConfig()
+      );
+      return response.data.analytics;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Admin — inventory overview
+export const adminGetInventory = createAsyncThunk(
+  "order/adminInventory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_URL}/admin/inventory`,
+        authConfig()
+      );
+      return response.data.inventory;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Admin — update order fulfilment status
+export const adminUpdateOrderStatus = createAsyncThunk(
+  "order/adminUpdateStatus",
+  async ({ id, orderStatus }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_URL}/admin/status/${id}`,
+        { orderStatus },
+        authConfig()
+      );
+      return response.data.order;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const orderSlice = createSlice({
   name: "order",
   initialState: {
@@ -101,6 +150,8 @@ const orderSlice = createSlice({
     adminOrders: [],
     currentOrder: null,
     lastCreatedOrder: null,
+    analytics: null,
+    inventory: [],
     loading: false,
     error: null,
     success: false,
@@ -189,6 +240,53 @@ const orderSlice = createSlice({
         );
       })
       .addCase(adminVerifyPayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Admin: dashboard analytics
+      .addCase(adminGetDashboardAnalytics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(adminGetDashboardAnalytics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.analytics = action.payload;
+      })
+      .addCase(adminGetDashboardAnalytics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Admin: inventory overview
+      .addCase(adminGetInventory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(adminGetInventory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.inventory = action.payload;
+      })
+      .addCase(adminGetInventory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Admin: update order status
+      .addCase(adminUpdateOrderStatus.pending, (state) => {
+        state.loading = true;
+        state.success = false;
+        state.error = null;
+      })
+      .addCase(adminUpdateOrderStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        const updated = action.payload;
+        state.adminOrders = state.adminOrders.map((o) =>
+          o._id === updated._id ? { ...o, ...updated } : o
+        );
+      })
+      .addCase(adminUpdateOrderStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
