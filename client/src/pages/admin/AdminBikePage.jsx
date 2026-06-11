@@ -27,6 +27,9 @@ export default function AdminBikeModelPage() {
 
   const [name, setName] = useState("");
   const [brandId, setBrandId] = useState("");
+  const [yearStart, setYearStart] = useState("");
+  const [yearEnd, setYearEnd] = useState("");
+  const [engineType, setEngineType] = useState("");
   const [image, setImage] = useState(null);
   const [editId, setEditId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -56,10 +59,16 @@ export default function AdminBikeModelPage() {
     e.preventDefault();
     if (!name) return toast.warn("Model name is required!");
     if (!brandId) return toast.warn("Please select a brand!");
+    if (yearStart && yearEnd && Number(yearStart) > Number(yearEnd)) {
+      return toast.warn("Start year cannot be later than end year!");
+    }
 
     const formData = new FormData();
     formData.append("name", name);
     formData.append("brand", brandId);
+    formData.append("yearStart", yearStart);
+    formData.append("yearEnd", yearEnd);
+    formData.append("engineType", engineType);
 
     if (editId) {
       if (image) formData.append("image", image);
@@ -80,6 +89,9 @@ export default function AdminBikeModelPage() {
     }
     setName(model.name || "");
     setBrandId(model.brand?._id || "");
+    setYearStart(model.yearStart ?? "");
+    setYearEnd(model.yearEnd ?? "");
+    setEngineType(model.engineType || "");
     setEditId(model._id);
     setImagePreview(
       Array.isArray(model.images) &&
@@ -119,6 +131,9 @@ export default function AdminBikeModelPage() {
   const resetForm = () => {
     setName("");
     setBrandId("");
+    setYearStart("");
+    setYearEnd("");
+    setEngineType("");
     setImage(null);
     setEditId(null);
     setImagePreview(null);
@@ -307,6 +322,56 @@ export default function AdminBikeModelPage() {
                         </div>
                       </div>
 
+                      <div className="grid sm:grid-cols-3 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            Year From{" "}
+                            <span className="text-slate-400 font-normal">
+                              (optional)
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            value={yearStart}
+                            onChange={(e) => setYearStart(e.target.value)}
+                            placeholder="e.g. 2015"
+                            min="1900"
+                            className="w-full px-4 py-3 bg-slate-50 border border-blue-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            Year To{" "}
+                            <span className="text-slate-400 font-normal">
+                              (optional)
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            value={yearEnd}
+                            onChange={(e) => setYearEnd(e.target.value)}
+                            placeholder="e.g. 2024"
+                            min="1900"
+                            className="w-full px-4 py-3 bg-slate-50 border border-blue-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            Engine Type{" "}
+                            <span className="text-slate-400 font-normal">
+                              (optional)
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            value={engineType}
+                            onChange={(e) => setEngineType(e.target.value)}
+                            placeholder="e.g. 150cc"
+                            className="w-full px-4 py-3 bg-slate-50 border border-blue-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300"
+                          />
+                        </div>
+                      </div>
+
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
                           Image
@@ -422,9 +487,17 @@ export default function AdminBikeModelPage() {
                     <h2 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-blue-600 transition-colors duration-300">
                       {model.name}
                     </h2>
-                    <p className="text-sm text-slate-500 mb-4 font-medium">
+                    <p className="text-sm text-slate-500 mb-1 font-medium">
                       {model.brand?.name}
                     </p>
+                    {(model.yearStart || model.yearEnd || model.engineType) && (
+                      <p className="text-xs text-slate-400 mb-4">
+                        {model.yearStart || model.yearEnd
+                          ? `${model.yearStart || "—"}–${model.yearEnd || "—"}`
+                          : ""}
+                        {model.engineType ? ` • ${model.engineType}` : ""}
+                      </p>
+                    )}
 
                     <div className="flex justify-center gap-3">
                       <motion.button

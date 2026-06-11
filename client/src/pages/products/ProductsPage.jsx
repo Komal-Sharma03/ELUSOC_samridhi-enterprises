@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchParts, clearPartError } from "../../store/product/partsSlice";
 import { fetchBikeModels } from "../../store/product/bikeSlice";
@@ -47,6 +47,22 @@ const categories = [
   "TPSR / Swing Arm Assly",
 ];
 
+// A bike model with no year range is treated as compatible with any year, so
+// models that predate the year fields (or universal-fit models) keep matching.
+const modelMatchesYear = (model, year) => {
+  if (!year) return true;
+  const y = Number(year);
+  const { yearStart: start, yearEnd: end } = model;
+  return (start == null || start <= y) && (end == null || end >= y);
+};
+
+// An empty engine type means the model matches any engine.
+const modelMatchesEngine = (model, engine) => {
+  if (!engine) return true;
+  const et = (model.engineType || "").trim();
+  return et === "" || et.toLowerCase() === engine.toLowerCase();
+};
+
 const ProductsPage = () => {
   const dispatch = useDispatch();
   const {
@@ -66,6 +82,9 @@ const ProductsPage = () => {
   );
   const [filterCategory, setFilterCategory] = useState("");
   const [filterCompatibility, setFilterCompatibility] = useState([]);
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterYear, setFilterYear] = useState("");
+  const [filterEngine, setFilterEngine] = useState("");
   const [filterStockStatus, setFilterStockStatus] = useState("");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState("name");
@@ -118,9 +137,48 @@ const ProductsPage = () => {
     setSearchTerm("");
     setFilterCategory("");
     setFilterCompatibility([]);
+    setFilterBrand("");
+    setFilterYear("");
+    setFilterEngine("");
     setFilterStockStatus("");
     setPriceRange([0, 10000]);
   };
+
+  // Resolve a part's vehicleCompatibility entries (which only carry model id +
+  // name) to full bike-model records so we can match on brand, year, engine.
+  const bikeModelMap = useMemo(() => {
+    const map = {};
+    for (const model of bikeModels) {
+      if (model && model._id) map[model._id] = model;
+    }
+    return map;
+  }, [bikeModels]);
+
+  // Vehicle filter options derived from real bike-model data.
+  const brandOptions = useMemo(() => {
+    const set = new Set();
+    for (const model of bikeModels) {
+      const brandName = model?.brand?.name;
+      if (brandName && brandName !== "N/A") set.add(brandName);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [bikeModels]);
+
+  const engineOptions = useMemo(() => {
+    const set = new Set();
+    for (const model of bikeModels) {
+      const engine = (model?.engineType || "").trim();
+      if (engine) set.add(engine);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [bikeModels]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear; y >= 1990; y--) years.push(y);
+    return years;
+  }, []);
 
   const sortedAndFilteredParts = parts
     .filter((part) => {
@@ -137,6 +195,20 @@ const ProductsPage = () => {
               filterCompatibility.includes(v._id || v)
             )
           : true;
+      // Vehicle search: a part matches when it is compatible with at least one
+      // bike model that satisfies all of the selected brand/year/engine
+      // criteria together.
+      const vehicleSelected = filterBrand || filterYear || filterEngine;
+      const matchesVehicle = !vehicleSelected
+        ? true
+        : (part.vehicleCompatibility || []).some((v) => {
+            const model = bikeModelMap[v._id || v];
+            if (!model) return false;
+            const okBrand = !filterBrand || model.brand?.name === filterBrand;
+            const okYear = modelMatchesYear(model, filterYear);
+            const okEngine = modelMatchesEngine(model, filterEngine);
+            return okBrand && okYear && okEngine;
+          });
       const matchesPrice =
         part.price >= priceRange[0] && part.price <= priceRange[1];
       const matchesStockStatus = filterStockStatus
@@ -152,6 +224,7 @@ const ProductsPage = () => {
         matchesSearch &&
         matchesCategory &&
         matchesCompatibility &&
+        matchesVehicle &&
         matchesPrice &&
         matchesStockStatus
       );
@@ -175,6 +248,9 @@ const ProductsPage = () => {
     searchTerm,
     filterCategory,
     filterCompatibility.length > 0,
+    filterBrand,
+    filterYear,
+    filterEngine,
     filterStockStatus,
     priceRange[0] > 0 || priceRange[1] < 10000,
   ].filter(Boolean).length;
@@ -307,6 +383,60 @@ const ProductsPage = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vehicle Brand
+                </label>
+                <select
+                  value={filterBrand}
+                  onChange={(e) => setFilterBrand(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="">All Brands</option>
+                  {brandOptions.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Manufacturing Year
+                </label>
+                <select
+                  value={filterYear}
+                  onChange={(e) => setFilterYear(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="">Any Year</option>
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Engine Type
+                </label>
+                <select
+                  value={filterEngine}
+                  onChange={(e) => setFilterEngine(e.target.value)}
+                  disabled={engineOptions.length === 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {engineOptions.length === 0 ? "No engine data" : "Any Engine"}
+                  </option>
+                  {engineOptions.map((eng) => (
+                    <option key={eng} value={eng}>
+                      {eng}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

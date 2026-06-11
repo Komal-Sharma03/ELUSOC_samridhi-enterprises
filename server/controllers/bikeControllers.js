@@ -4,8 +4,25 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { uploadImage, deleteImage } from "../utils/cloudinary.js";
 
+// Coerce an incoming year value (which arrives as a string via multipart form
+// data) into a number. Empty or invalid input becomes null, meaning "no year
+// constraint" rather than 0.
+const parseYear = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
 export const addBikeModel = catchAsyncErrors(async (req, res, next) => {
-  const { name, brand } = req.body;
+  const { name, brand, engineType } = req.body;
+  const yearStart = parseYear(req.body.yearStart);
+  const yearEnd = parseYear(req.body.yearEnd);
+
+  if (yearStart !== null && yearEnd !== null && yearStart > yearEnd) {
+    return next(
+      new ErrorHandler("Start year cannot be later than end year", 400)
+    );
+  }
 
   const existing = await BikeModel.findOne({ name, brand });
   if (existing) {
@@ -30,6 +47,9 @@ export const addBikeModel = catchAsyncErrors(async (req, res, next) => {
   const newBikeModel = await BikeModel.create({
     name,
     brand,
+    yearStart,
+    yearEnd,
+    engineType: (engineType || "").trim(),
     images: [
       {
         public_id: upload.public_id,
@@ -68,6 +88,30 @@ export const updateBikeModel = catchAsyncErrors(async (req, res, next) => {
 
   if (req.body.brand) {
     bikeModel.brand = req.body.brand;
+  }
+
+  if (req.body.yearStart !== undefined) {
+    bikeModel.yearStart = parseYear(req.body.yearStart);
+  }
+
+  if (req.body.yearEnd !== undefined) {
+    bikeModel.yearEnd = parseYear(req.body.yearEnd);
+  }
+
+  if (
+    bikeModel.yearStart !== null &&
+    bikeModel.yearStart !== undefined &&
+    bikeModel.yearEnd !== null &&
+    bikeModel.yearEnd !== undefined &&
+    bikeModel.yearStart > bikeModel.yearEnd
+  ) {
+    return next(
+      new ErrorHandler("Start year cannot be later than end year", 400)
+    );
+  }
+
+  if (req.body.engineType !== undefined) {
+    bikeModel.engineType = (req.body.engineType || "").trim();
   }
 
   if (req.file) {
