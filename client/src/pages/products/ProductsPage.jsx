@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import Loader from "../../extras/Loader";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const categories = [
   "Abs",
@@ -60,7 +60,10 @@ const ProductsPage = () => {
     error: bikeError,
   } = useSelector((state) => state.bike);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("search") || ""
+  );
   const [filterCategory, setFilterCategory] = useState("");
   const [filterCompatibility, setFilterCompatibility] = useState([]);
   const [filterStockStatus, setFilterStockStatus] = useState("");
@@ -73,6 +76,12 @@ const ProductsPage = () => {
     dispatch(fetchParts());
     dispatch(fetchBikeModels());
   }, [dispatch]);
+
+  // Keep the search box in sync with the `?search=` query param so searches
+  // started from the global header search bar populate this page.
+  useEffect(() => {
+    setSearchTerm(searchParams.get("search") || "");
+  }, [searchParams]);
 
   useEffect(() => {
     if (partsError) {
@@ -117,7 +126,8 @@ const ProductsPage = () => {
     .filter((part) => {
       const matchesSearch =
         part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        part.product_id.toLowerCase().includes(searchTerm.toLowerCase());
+        part.product_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (part.category || "").toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = filterCategory
         ? part.category === filterCategory
         : true;

@@ -46,6 +46,18 @@ export const fetchPartById = createAsyncThunk(
   }
 );
 
+export const fetchSimilarParts = createAsyncThunk(
+  "part/fetchSimilar",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${API_URL}/get/${id}/similar`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 export const updatePart = createAsyncThunk(
   "part/update",
   async ({ id, formData }, { rejectWithValue }) => {
@@ -134,6 +146,9 @@ const partSlice = createSlice({
   initialState: {
     parts: [],
     part: null,
+    similarParts: [],
+    similarLoading: false,
+    similarError: null,
     loading: false,
     error: null,
     success: false,
@@ -185,6 +200,19 @@ const partSlice = createSlice({
       .addCase(fetchPartById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(fetchSimilarParts.pending, (state) => {
+        state.similarLoading = true;
+        state.similarError = null;
+        state.similarParts = [];
+      })
+      .addCase(fetchSimilarParts.fulfilled, (state, action) => {
+        state.similarLoading = false;
+        state.similarParts = action.payload.parts;
+      })
+      .addCase(fetchSimilarParts.rejected, (state, action) => {
+        state.similarLoading = false;
+        state.similarError = action.payload;
       })
       .addCase(updatePart.pending, (state) => {
         state.loading = true;

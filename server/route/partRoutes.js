@@ -8,6 +8,7 @@ import {
   deletePart,
   createOrUpdateReview,
   deleteReview,
+  getSimilarParts,
 } from "../controllers/partsControllers.js";
 import auth from "../middleware/auth.js";
 import admin from "../middleware/Admin.js";
@@ -17,6 +18,7 @@ const partRouter = express.Router();
 partRouter.post("/add", upload.array("images", 5), auth, admin, addPart);
 partRouter.get("/get", getAllParts);
 partRouter.get("/get/:id", getPartById);
+partRouter.get("/get/:id/similar", getSimilarParts);
 partRouter.put(
   "/update/:id",
   upload.array("images", 5),

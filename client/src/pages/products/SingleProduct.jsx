@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchPartById,
+  fetchSimilarParts,
   createOrUpdateReview,
   deleteReview,
   clearPartError,
@@ -17,7 +18,9 @@ const SingleProduct = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { part, loading, error, success } = useSelector((state) => state.parts);
+  const { part, loading, error, success, similarParts } = useSelector(
+    (state) => state.parts
+  );
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -28,6 +31,7 @@ const SingleProduct = () => {
 
   useEffect(() => {
     dispatch(fetchPartById(id));
+    dispatch(fetchSimilarParts(id));
   }, [dispatch, id]);
 
   useEffect(() => {
@@ -507,6 +511,93 @@ const SingleProduct = () => {
             </motion.div>
           </div>
         </motion.div>
+
+        {similarParts && similarParts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-12 bg-white rounded-3xl shadow-xl overflow-hidden"
+          >
+            <div className="p-8 lg:p-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <svg
+                  className="w-8 h-8 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+                Similar Products
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Related parts in the same category and compatible with similar
+                vehicles.
+              </p>
+
+              <div className="flex gap-5 overflow-x-auto pb-4 -mx-2 px-2">
+                {similarParts.map((item) => (
+                  <Link
+                    key={item._id}
+                    to={`/products/${item._id}`}
+                    className="flex-shrink-0 w-56"
+                  >
+                    <motion.div
+                      whileHover={{ y: -4 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      className="h-full bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+                    >
+                      <div className="relative">
+                        <img
+                          src={item.images?.[0]?.url || "/images/placeholder.jpg"}
+                          alt={item.name || "Product"}
+                          className="w-full h-40 object-cover"
+                        />
+                        {item.bestseller && (
+                          <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            Bestseller
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-base font-semibold text-gray-900 line-clamp-2 capitalize min-h-[3rem]">
+                          {item.name || "Unknown Product"}
+                        </h3>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl font-bold text-blue-600">
+                            ₹{item.price?.toLocaleString() || "0"}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              item.stock > 15
+                                ? "bg-green-100 text-green-800"
+                                : item.stock >= 5
+                                ? "bg-yellow-100 text-yellow-800"
+                                : item.stock > 0
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {item.stock > 0 ? "In Stock" : "Out of Stock"}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500 truncate">
+                          {item.category}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
