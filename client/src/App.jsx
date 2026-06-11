@@ -27,6 +27,7 @@ import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/my-profile/OrderHistory";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import SupportAssistant from "./components/SupportAssistant";
 
 function App() {
   const dispatch = useDispatch();
@@ -159,6 +160,9 @@ function App() {
       </Routes>
 
       <Footer />
+
+      {/* Site-wide rule-based support assistant (floating widget) */}
+      <SupportAssistant />
     </div>
   );
 }
