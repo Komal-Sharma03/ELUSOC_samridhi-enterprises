@@ -110,3 +110,168 @@ export const adminGetInventoryOverview = catchAsyncErrors(
     });
   }
 );
+
+// GET /api/orders/admin/sales-analytics  (auth, admin)
+// Returns the chart-oriented datasets for the dedicated Sales Analytics page:
+// monthly sales trends, top selling products, customer growth, and the most
+// recent orders. Every figure is derived from real order / user records.
+// All four datasets are gathered with Promise.all so the endpoint issues its
+// queries concurrently and stays responsive as the collections grow.
+//
+// The structure deliberately mirrors adminGetDashboardAnalytics so future
+// additions (category performance, profit analysis, conversion metrics,
+// sales forecasting) can be added as extra aggregation branches here without
+// touching the route or the existing summary endpoint.
+export const adminGetSalesAnalytics = catchAsyncErrors(
+  async (req, res, next) => {
+    // The reporting window for the two time-series charts. Twelve months gives
+    // a full year of context while keeping the aggregation bounded. Anything
+    // older than this is excluded by the $match stages below.
+    const TREND_MONTHS = 12;
+    const windowStart = new Date();
+    windowStart.setMonth(windowStart.getMonth() - (TREND_MONTHS - 1));
+    windowStart.setDate(1);
+    windowStart.setHours(0, 0, 0, 0);
+
+    const [monthlySalesAgg, topProductsAgg, customerGrowthAgg, recentOrders] =
+      await Promise.all([
+        // 1. Monthly sales trends — revenue and paid-order count per calendar
+        //    month, paid orders only so the revenue line is trustworthy.
+        Order.aggregate([
+          { $match: { ...PAID_MATCH, createdAt: { $gte: windowStart } } },
+          {
+            $group: {
+              _id: {
+                year: { $year: "$createdAt" },
+                month: { $month: "$createdAt" },
+              },
+              revenue: { $sum: "$itemsTotal" },
+              orders: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ]),
+
+        // 2. Top selling products — unwind each paid order's line items and
+        //    rank by total quantity sold. Revenue per product is included so
+        //    the UI can show both volume and value. Limited to the top 8.
+        Order.aggregate([
+          { $match: PAID_MATCH },
+          { $unwind: "$items" },
+          {
+            $group: {
+              _id: "$items.part",
+              name: { $first: "$items.name" },
+              unitsSold: { $sum: "$items.quantity" },
+              revenue: {
+                $sum: { $multiply: ["$items.price", "$items.quantity"] },
+              },
+            },
+          },
+          { $sort: { unitsSold: -1 } },
+          { $limit: 8 },
+        ]),
+
+        // 3. Customer growth — new USER registrations per calendar month over
+        //    the same window, so sign-ups can be compared against sales.
+        User.aggregate([
+          {
+            $match: { role: "USER", createdAt: { $gte: windowStart } },
+          },
+          {
+            $group: {
+              _id: {
+                year: { $year: "$createdAt" },
+                month: { $month: "$createdAt" },
+              },
+              newCustomers: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ]),
+
+        // 4. Recent orders — the ten most recent regardless of payment state,
+        //    with just the fields the table needs (customer name comes from the
+        //    populated user, falling back to the shipping name).
+        Order.find({})
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .populate("user", "name email")
+          .select(
+            "itemsTotal paymentStatus orderStatus paymentMethod createdAt shippingAddress.fullName user"
+          ),
+      ]);
+
+    // Build a continuous list of the last TREND_MONTHS months so the charts
+    // show every month on the axis even when a month had zero sales or zero
+    // sign-ups. Missing months are filled with zeros rather than skipped.
+    const months = [];
+    const cursor = new Date(windowStart);
+    for (let i = 0; i < TREND_MONTHS; i += 1) {
+      months.push({ year: cursor.getFullYear(), month: cursor.getMonth() + 1 });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    const monthLabel = (year, month) =>
+      new Date(year, month - 1, 1).toLocaleDateString("en-IN", {
+        month: "short",
+        year: "2-digit",
+      });
+
+    const salesByKey = monthlySalesAgg.reduce((acc, row) => {
+      acc[`${row._id.year}-${row._id.month}`] = row;
+      return acc;
+    }, {});
+
+    const growthByKey = customerGrowthAgg.reduce((acc, row) => {
+      acc[`${row._id.year}-${row._id.month}`] = row;
+      return acc;
+    }, {});
+
+    const monthlySales = months.map(({ year, month }) => {
+      const row = salesByKey[`${year}-${month}`];
+      return {
+        label: monthLabel(year, month),
+        revenue: row?.revenue || 0,
+        orders: row?.orders || 0,
+      };
+    });
+
+    const customerGrowth = months.map(({ year, month }) => {
+      const row = growthByKey[`${year}-${month}`];
+      return {
+        label: monthLabel(year, month),
+        newCustomers: row?.newCustomers || 0,
+      };
+    });
+
+    const topProducts = topProductsAgg.map((p) => ({
+      _id: p._id,
+      name: p.name || "Unknown product",
+      unitsSold: p.unitsSold,
+      revenue: p.revenue,
+    }));
+
+    const recent = recentOrders.map((o) => ({
+      _id: o._id,
+      customerName: o.user?.name || o.shippingAddress?.fullName || "Guest",
+      customerEmail: o.user?.email || "",
+      itemsTotal: o.itemsTotal,
+      paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus,
+      orderStatus: o.orderStatus,
+      createdAt: o.createdAt,
+    }));
+
+    res.status(200).json({
+      success: true,
+      salesAnalytics: {
+        monthlySales,
+        topProducts,
+        customerGrowth,
+        recentOrders: recent,
+        windowMonths: TREND_MONTHS,
+      },
+    });
+  }
+);

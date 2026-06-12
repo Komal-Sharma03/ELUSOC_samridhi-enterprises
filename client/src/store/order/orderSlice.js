@@ -126,6 +126,23 @@ export const adminGetInventory = createAsyncThunk(
   }
 );
 
+// Admin — chart-oriented sales analytics (monthly trends, top products,
+// customer growth, recent orders) for the dedicated Sales Analytics page.
+export const adminGetSalesAnalytics = createAsyncThunk(
+  "order/adminSalesAnalytics",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_URL}/admin/sales-analytics`,
+        authConfig()
+      );
+      return response.data.salesAnalytics;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 // Admin — update order fulfilment status
 export const adminUpdateOrderStatus = createAsyncThunk(
   "order/adminUpdateStatus",
@@ -151,6 +168,7 @@ const orderSlice = createSlice({
     currentOrder: null,
     lastCreatedOrder: null,
     analytics: null,
+    salesAnalytics: null,
     inventory: [],
     loading: false,
     error: null,
@@ -268,6 +286,20 @@ const orderSlice = createSlice({
         state.inventory = action.payload;
       })
       .addCase(adminGetInventory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Admin: sales analytics (charts)
+      .addCase(adminGetSalesAnalytics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(adminGetSalesAnalytics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.salesAnalytics = action.payload;
+      })
+      .addCase(adminGetSalesAnalytics.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
