@@ -256,7 +256,7 @@ const ProductsPage = () => {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gray-100 mt-22  mb-16">
+    <div className="min-h-screen bg-gray-100 mt-20 sm:mt-24 mb-16">
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -567,7 +567,8 @@ const ProductsPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden"
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-200 transition-all duration-300 overflow-hidden flex flex-col"
                 >
                   <Link to={`/products/${part._id}`}>
                     <div className="w-full">
@@ -580,12 +581,12 @@ const ProductsPage = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.1 }}
-                        className="object-cover w-full h-48 sm:h-40 rounded-t-lg"
+                        className="object-cover w-full h-44 rounded-t-lg bg-gray-50"
                       />
                     </div>
                     <div className="p-3 sm:p-4 flex-1">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 capitalize">
+                        <h3 className="text-base font-semibold text-gray-900 line-clamp-2 capitalize">
                           {part.name}
                         </h3>
                         {part.bestseller && (
@@ -602,7 +603,7 @@ const ProductsPage = () => {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg sm:text-2xl font-bold text-gray-900">
+                          <span className="text-xl font-bold text-gray-900">
                             ₹{part.price.toLocaleString()}
                           </span>
                           <span

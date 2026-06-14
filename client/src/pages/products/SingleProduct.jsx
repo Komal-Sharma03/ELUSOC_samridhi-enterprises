@@ -210,8 +210,8 @@ const SingleProduct = () => {
   const stockStatus = getStockStatus();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  from-blue-50 via-white to-blue-50 mt-15">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8  mt-20 mb-16">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
