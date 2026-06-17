@@ -27,6 +27,8 @@ import ProductsPage from "./pages/products/ProductsPage";
 import ComparePage from "./pages/products/ComparePage";
 import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/my-profile/OrderHistory";
+import SupportTickets from "./pages/my-profile/SupportTickets";
+import AdminSupportTickets from "./pages/admin/AdminSupportTickets";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import InventoryPage from "./pages/admin/InventoryPage";
@@ -115,6 +117,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/support"
+          element={
+            <ProtectedRoute>
+              <SupportTickets />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/admin/dashboard"
@@ -193,6 +203,14 @@ function App() {
           element={
             <ProtectedRoute isAdmin={true}>
               <AdminCoupons />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/support"
+          element={
+            <ProtectedRoute isAdmin={true}>
+              <AdminSupportTickets />
             </ProtectedRoute>
           }
         />
