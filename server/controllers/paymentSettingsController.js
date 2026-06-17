@@ -1,3 +1,4 @@
+import ErrorHandler from "../utils/errorHandler.js";
 import PaymentSettings from "../models/paymentSettingsModel.js";
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import { uploadImage, deleteImage } from "../utils/cloudinary.js";
@@ -31,10 +32,7 @@ export const adminUpdatePaymentSettings = catchAsyncErrors(
     if (req.file) {
       const uploaded = await uploadImage(req.file);
       if (!uploaded || !uploaded.secure_url) {
-        return res.status(500).json({
-          success: false,
-          message: "QR image upload failed. Please try again.",
-        });
+        return next(new ErrorHandler("QR image upload failed. Please try again.", 500));
       }
       // Remove the previous QR from Cloudinary if one existed.
       if (settings.qrImage && settings.qrImage.public_id) {
