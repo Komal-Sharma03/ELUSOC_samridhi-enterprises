@@ -28,6 +28,7 @@ import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/my-profile/OrderHistory";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import InventoryPage from "./pages/admin/InventoryPage";
 import SupportAssistant from "./components/SupportAssistant";
 
 function App() {
@@ -163,6 +164,14 @@ function App() {
           element={
             <ProtectedRoute isAdmin={true}>
               <AdminPaymentSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/inventory"
+          element={
+            <ProtectedRoute isAdmin={true}>
+              <InventoryPage />
             </ProtectedRoute>
           }
         />

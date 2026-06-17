@@ -13,6 +13,7 @@ import {
   ClipboardList,
   CreditCard,
   BarChart3,
+  PackageSearch,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -35,6 +36,7 @@ const quickLinks = [
   { to: "/admin/brands", label: "Bike Brands", icon: Building2 },
   { to: "/admin/bikes", label: "Bike Models", icon: Car },
   { to: "/admin/parts", label: "Bike Parts", icon: Wrench },
+  { to: "/admin/inventory", label: "Inventory", icon: PackageSearch },
   { to: "/admin/payment-settings", label: "Payment Settings", icon: CreditCard },
 ];
 
