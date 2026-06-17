@@ -16,6 +16,7 @@ import {
   PackageSearch,
   UsersRound,
   Tag,
+  LifeBuoy,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -41,6 +42,7 @@ const quickLinks = [
   { to: "/admin/inventory", label: "Inventory", icon: PackageSearch },
   { to: "/admin/customers", label: "Customers", icon: UsersRound },
   { to: "/admin/coupons", label: "Coupons", icon: Tag },
+  { to: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
   { to: "/admin/payment-settings", label: "Payment Settings", icon: CreditCard },
 ];
 

@@ -9,6 +9,7 @@ import cartSlice from "./cart/cartSlice";
 import orderSlice from "./order/orderSlice";
 import paymentSettingsSlice from "./order/paymentSettingsSlice";
 import couponSlice from "./order/couponSlice";
+import supportSlice from "./order/supportSlice";
 
 const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ const store = configureStore({
     order: orderSlice,
     paymentSettings: paymentSettingsSlice,
     coupon: couponSlice,
+    support: supportSlice,
   },
 });
 
