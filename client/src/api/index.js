@@ -10,7 +10,8 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && error.response?.data?.message === "Token expired, please login again") {
       localStorage.removeItem("token");
-      window.location.href = "/"; 
+      localStorage.removeItem("user");
+      window.location.href = "/login"; 
     }
     return Promise.reject(error);
   }

@@ -50,7 +50,7 @@ export const signupUser = createAsyncThunk(
         }
       );
 
-      if (!response.data || !response.data.token || !response.data.user) {
+      if (!response.data || !response.data.success) {
         throw new Error("Invalid response from server");
       }
 
@@ -433,9 +433,8 @@ const authSlice = createSlice({
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
+        state.user = action.payload.data;
+        localStorage.setItem("user", JSON.stringify(action.payload.data));
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
