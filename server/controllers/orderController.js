@@ -1,3 +1,4 @@
+import ErrorHandler from "../utils/errorHandler.js";
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
 import User from "../models/userModel.js";
@@ -46,10 +47,7 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (!["COD", "Online"].includes(paymentMethod)) {
-    return res.status(400).json({
-      success: false,
-      message: "Payment method must be either COD or Online",
-    });
+    return next(new ErrorHandler("Payment method must be either COD or Online", 400));
   }
 
   // Snapshot the cart items onto the order (unit price + image), so the order
@@ -87,17 +85,11 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
 
   if (paymentMethod === "Online") {
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "A payment screenshot is required for online payments",
-      });
+      return next(new ErrorHandler("A payment screenshot is required for online payments", 400));
     }
     const uploaded = await uploadImage(req.file);
     if (!uploaded || !uploaded.secure_url) {
-      return res.status(500).json({
-        success: false,
-        message: "Payment screenshot upload failed. Please try again.",
-      });
+      return next(new ErrorHandler("Payment screenshot upload failed. Please try again.", 500));
     }
     paymentScreenshot = {
       public_id: uploaded.public_id,
@@ -182,7 +174,7 @@ export const getMyOrders = catchAsyncErrors(async (req, res, next) => {
 export const getOrderById = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
   if (!order) {
-    return res.status(404).json({ success: false, message: "Order not found" });
+    return next(new ErrorHandler("Order not found", 404));
   }
   if (order.user.toString() !== req.user._id.toString()) {
     return res
@@ -209,10 +201,7 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
   const { action, rejectionReason } = req.body;
 
   if (!["approve", "reject"].includes(action)) {
-    return res.status(400).json({
-      success: false,
-      message: "Action must be either 'approve' or 'reject'",
-    });
+    return next(new ErrorHandler("Action must be either 'approve' or 'reject'", 400));
   }
 
   const order = await Order.findById(req.params.id).populate(
@@ -220,7 +209,7 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
     "name email"
   );
   if (!order) {
-    return res.status(404).json({ success: false, message: "Order not found" });
+    return next(new ErrorHandler("Order not found", 404));
   }
 
   if (action === "approve") {
@@ -317,11 +306,7 @@ export const adminUpdateOrderStatus = catchAsyncErrors(
       order.paymentStatus !== "Success" &&
       ["Processing", "Shipped", "Delivered"].includes(orderStatus)
     ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Cannot advance fulfilment until the order's payment is verified",
-      });
+      return next(new ErrorHandler("Cannot advance fulfilment until the order's payment is verified", 400));
     }
 
     order.orderStatus = orderStatus;

@@ -30,18 +30,12 @@ export const addBikeModel = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: "No image file provided",
-    });
+    return next(new ErrorHandler("No image file provided", 400));
   }
 
   const upload = await uploadImage(req.file);
   if (!upload || !upload.url) {
-    return res.status(500).json({
-      success: false,
-      message: "Image upload failed",
-    });
+    return next(new ErrorHandler("Image upload failed", 500));
   }
 
   const newBikeModel = await BikeModel.create({
@@ -123,10 +117,7 @@ export const updateBikeModel = catchAsyncErrors(async (req, res, next) => {
 
     const upload = await uploadImage(req.file);
     if (!upload || !upload.url) {
-      return res.status(500).json({
-        success: false,
-        message: "Image upload failed",
-      });
+      return next(new ErrorHandler("Image upload failed", 500));
     }
 
     bikeModel.images = [
