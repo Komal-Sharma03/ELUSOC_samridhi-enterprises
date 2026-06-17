@@ -1,6 +1,7 @@
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
 import User from "../models/userModel.js";
+import Part from "../models/partModel.js";
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import { uploadImage } from "../utils/cloudinary.js";
 import sendEmail from "../config/sendEmail.js";
@@ -50,6 +51,34 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
       success: false,
       message: "Payment method must be either COD or Online",
     });
+  }
+
+  // Re-validate and deduct stock to prevent overselling
+  for (const item of cart.items) {
+    if (!item.part) {
+      return res.status(400).json({
+        success: false,
+        message: "A product in your cart is no longer available",
+      });
+    }
+    const part = await Part.findById(item.part._id);
+    if (!part) {
+      return res.status(400).json({
+        success: false,
+        message: `Product ${item.name || "Item"} is no longer available`,
+      });
+    }
+    if (part.stock < item.quantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient stock for ${part.name}`,
+      });
+    }
+  }
+
+  // All checks passed, deduct stock atomically
+  for (const item of cart.items) {
+    await Part.findByIdAndUpdate(item.part._id, { $inc: { stock: -item.quantity } });
   }
 
   // Snapshot the cart items onto the order (unit price + image), so the order
@@ -253,6 +282,13 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
   order.rejectionReason = rejectionReason || "Payment could not be verified";
   await order.save();
 
+  // Restore stock
+  for (const item of order.items) {
+    if (item.part) {
+      await Part.findByIdAndUpdate(item.part, { $inc: { stock: item.quantity } });
+    }
+  }
+
   try {
     await sendEmail({
       sendTo: order.user?.email,
@@ -324,8 +360,18 @@ export const adminUpdateOrderStatus = catchAsyncErrors(
       });
     }
 
+    const previousStatus = order.orderStatus;
     order.orderStatus = orderStatus;
     await order.save();
+
+    if (previousStatus !== "Cancelled" && orderStatus === "Cancelled") {
+      // Restore stock
+      for (const item of order.items) {
+        if (item.part) {
+          await Part.findByIdAndUpdate(item.part, { $inc: { stock: item.quantity } });
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
