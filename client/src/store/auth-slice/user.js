@@ -601,13 +601,19 @@ const authSlice = createSlice({
       })
       .addCase(updateUserRole.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.map((user) =>
-          user._id === action.payload.user._id ? action.payload.user : user
-        );
+        // Backend returns the updated user under `data`. Patch the matching row
+        // in the list so the new role is reflected without a refetch.
+        const updated = action.payload?.data;
+        if (updated?._id) {
+          state.users = state.users.map((user) =>
+            user._id === updated._id ? updated : user
+          );
+        }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.error;
+        state.error =
+          action.payload?.message || action.payload?.error || "Failed to update role";
       })
 
       // Delete User

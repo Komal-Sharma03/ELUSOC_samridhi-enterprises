@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { getAllUsers } from "@/store/auth-slice/user";
+import { getAllUsers, updateUserRole } from "@/store/auth-slice/user";
 import Loader from "../../extras/Loader";
 
 // Status → colour-coded pill. The User model allows: Active, Warning, Suspended.
@@ -56,9 +56,11 @@ const PAGE_SIZES = [10, 25, 50];
 
 const CustomerPage = () => {
   const dispatch = useDispatch();
-  const { users, totalUsers, totalPages, loading, error } = useSelector(
-    (state) => state.auth
-  );
+  const { users, totalUsers, totalPages, loading, error, user: currentUser } =
+    useSelector((state) => state.auth);
+
+  // Tracks which user's role is currently being saved, to disable just that row.
+  const [savingRoleFor, setSavingRoleFor] = useState(null);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -88,6 +90,42 @@ const CustomerPage = () => {
   // The backend already filters by search so totals reflect the
   // full match count, not just the current page.
   const list = users || [];
+
+  // Whether the logged-in admin can edit roles. The backend restricts the
+  // role-update endpoint to ADMIN only (managers get 403), so we mirror that in
+  // the UI and only render the editable dropdown for an ADMIN.
+  const canEditRoles = currentUser?.role === "ADMIN";
+
+  const ROLE_OPTIONS = ["USER", "MANAGER", "ADMIN"];
+
+  const handleRoleChange = async (targetUser, newRole) => {
+    if (newRole === targetUser.role) return;
+
+    // Guard: an admin must not demote their own account, which could lock them
+    // (and potentially everyone) out of role management.
+    if (
+      currentUser &&
+      targetUser._id === currentUser._id &&
+      newRole !== "ADMIN"
+    ) {
+      toast.error("You cannot change your own admin role.");
+      return;
+    }
+
+    setSavingRoleFor(targetUser._id);
+    const res = await dispatch(
+      updateUserRole({ email: targetUser.email, role: newRole })
+    );
+    setSavingRoleFor(null);
+
+    if (updateUserRole.fulfilled.match(res)) {
+      toast.success(`${targetUser.name}'s role updated to ${newRole}`);
+    } else {
+      toast.error(
+        res.payload?.message || res.payload?.error || "Failed to update role"
+      );
+    }
+  };
   const activeCount = list.filter((u) => u.status === "Active").length;
   const warningCount = list.filter((u) => u.status === "Warning").length;
   const suspendedCount = list.filter((u) => u.status === "Suspended").length;
@@ -258,13 +296,31 @@ const CustomerPage = () => {
                   {formatDate(user.lastLogin)}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${rolePill(
-                      user.role
-                    )}`}
-                  >
-                    {user.role}
-                  </span>
+                  {canEditRoles ? (
+                    <select
+                      value={user.role}
+                      disabled={savingRoleFor === user._id}
+                      onChange={(e) => handleRoleChange(user, e.target.value)}
+                      className={`text-xs font-medium rounded-lg border px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${rolePill(
+                        user.role
+                      )}`}
+                      aria-label={`Change role for ${user.name}`}
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${rolePill(
+                        user.role
+                      )}`}
+                    >
+                      {user.role}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span
