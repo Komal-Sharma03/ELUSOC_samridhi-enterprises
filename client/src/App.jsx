@@ -30,6 +30,7 @@ import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/my-profile/OrderHistory";
 import SupportTickets from "./pages/my-profile/SupportTickets";
 import AdminSupportTickets from "./pages/admin/AdminSupportTickets";
+import MyAddresses from "./pages/my-profile/MyAddresses";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import InventoryPage from "./pages/admin/InventoryPage";
@@ -126,6 +127,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SupportTickets />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-addresses"
+          element={
+            <ProtectedRoute>
+              <MyAddresses />
             </ProtectedRoute>
           }
         />

@@ -12,7 +12,8 @@ import {
 } from "../store/order/orderSlice";
 import { getPaymentSettings } from "../store/order/paymentSettingsSlice";
 import { validateCoupon, clearAppliedCoupon, clearCouponError } from "../store/order/couponSlice";
-import { Tag, X } from "lucide-react";
+import { getMyAddresses } from "../store/order/addressSlice";
+import { Tag, X, MapPin } from "lucide-react";
 import Loader from "../extras/Loader";
 
 const Checkout = () => {
@@ -28,7 +29,9 @@ const Checkout = () => {
   const { applied: appliedCoupon, loading: couponLoading, error: couponError } = useSelector(
     (state) => state.coupon
   );
+  const { addresses } = useSelector((state) => state.address);
   const [couponInput, setCouponInput] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState("");
 
   const [form, setForm] = useState({
     fullName: "",
@@ -46,7 +49,26 @@ const Checkout = () => {
   useEffect(() => {
     dispatch(fetchCart());
     dispatch(getPaymentSettings());
+    dispatch(getMyAddresses());
   }, [dispatch]);
+
+  const fillFromAddress = (addr) => {
+    if (!addr) return;
+    setForm({ fullName: addr.fullName || "", phone: addr.phone || "", addressLine: addr.addressLine || "", city: addr.city || "", state: addr.state || "", pincode: addr.pincode || "" });
+  };
+
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddressId) {
+      const def = addresses.find((a) => a.isDefault) || addresses[0];
+      if (def) { setSelectedAddressId(def._id); fillFromAddress(def); }
+    }
+  }, [addresses, selectedAddressId]);
+
+  const handleSelectAddress = (id) => {
+    setSelectedAddressId(id);
+    if (id === "") return;
+    fillFromAddress(addresses.find((a) => a._id === id));
+  };
 
   // Prefill name/phone from the logged-in user once available.
   useEffect(() => {
@@ -201,6 +223,29 @@ const Checkout = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Shipping Address
               </h2>
+              {addresses.length > 0 && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <span className="inline-flex items-center gap-1.5"><MapPin className="w-4 h-4" /> Deliver to a saved address</span>
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {addresses.map((a) => (
+                      <button type="button" key={a._id} onClick={() => handleSelectAddress(a._id)}
+                        className={`text-left rounded-xl border px-4 py-3 transition ${selectedAddressId === a._id ? "border-blue-500 bg-blue-50 ring-1 ring-blue-200" : "border-gray-200 hover:border-gray-300"}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 text-sm">{a.fullName}{a.label ? <span className="ml-2 text-xs uppercase tracking-wide text-gray-400">{a.label}</span> : null}</span>
+                          {a.isDefault && <span className="text-xs font-medium text-blue-600">Default</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{a.addressLine}, {a.city}{a.state ? `, ${a.state}` : ""} — {a.pincode} · {a.phone}</p>
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => handleSelectAddress("")}
+                      className={`text-left rounded-xl border px-4 py-3 text-sm font-medium transition ${selectedAddressId === "" ? "border-blue-500 bg-blue-50 ring-1 ring-blue-200 text-blue-700" : "border-gray-200 hover:border-gray-300 text-gray-700"}`}>
+                      + Enter a new address
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">

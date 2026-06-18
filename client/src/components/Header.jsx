@@ -9,6 +9,7 @@ import {
   LogOut,
   UserCog,
   LifeBuoy,
+  MapPin,
 } from "lucide-react";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
@@ -315,6 +316,14 @@ function Header() {
                           Help & Support
                         </Link>
                         <Link
+                          to="/my-addresses"
+                          role="menuitem"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                        >
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          My Addresses
+                        </Link>
+                        <Link
                           to="/update-profile"
                           role="menuitem"
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
@@ -515,6 +524,22 @@ function Header() {
                       >
                         <LifeBuoy className="w-5 h-5 flex-shrink-0" />
                         Help & Support
+                      </Link>
+                    </motion.div>
+
+                    {/* My Addresses */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.32 }}
+                      whileHover={{ x: 6 }}
+                    >
+                      <Link
+                        to="/my-addresses"
+                        className={mobileNavLinkClass("/my-addresses")}
+                      >
+                        <MapPin className="w-5 h-5 flex-shrink-0" />
+                        My Addresses
                       </Link>
                     </motion.div>
 
