@@ -9,6 +9,7 @@
 - [Features](#-features)
 - [Tech Stack](#️-tech-stack)
 - [Folder Structure](#-folder-structure)
+- [Documentation](#-documentation)
 - [Local Development Setup](#️-local-development-setup)
 - [Environment Variables](#-environment-variables)
 - [MongoDB Atlas Setup](#-mongodb-atlas-setup)
@@ -75,6 +76,20 @@ samridhi-enterprises/
     ├── route/               # API route definitions
     └── template/            # Email templates
 ```
+
+---
+
+## 📚 Documentation
+
+In-depth technical documentation lives in the [`docs/`](./docs) directory:
+
+- **[Architecture Overview](./docs/ARCHITECTURE.md)** — system design, backend layers, request lifecycle, and the authentication & authorization flow.
+- **[API Reference](./docs/API_REFERENCE.md)** — every REST endpoint across all 10 routers, with method, path, access level, and request fields.
+- **[Database Schema](./docs/DATABASE_SCHEMA.md)** — all 10 Mongoose models with fields, types, enums, and relationships.
+- **[Admin Workflows](./docs/ADMIN_WORKFLOWS.md)** — admin/manager operations: users, catalogue, order & payment verification, coupons, support, and analytics.
+- **[Environment Variables](./docs/ENVIRONMENT.md)** — a developer reference for every backend/frontend variable and where it is used.
+
+New contributors can start with [`docs/README.md`](./docs/README.md) for an index.
 
 ---
 
