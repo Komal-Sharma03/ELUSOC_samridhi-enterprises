@@ -8,7 +8,13 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && error.response?.data?.message === "Token expired, please login again") {
+    const status = error.response?.status;
+    const message = error.response?.data?.message;
+
+    if (
+      (status === 401 && message === "Token expired, please login again") ||
+      (status === 403 && message && message.toLowerCase().includes("suspended"))
+    ) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login"; 

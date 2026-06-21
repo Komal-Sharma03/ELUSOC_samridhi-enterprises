@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import User from "../models/userModel.js";
 
 const admin = async (req, res, next) => {
   try {
@@ -12,14 +13,23 @@ const admin = async (req, res, next) => {
 
     const decodedData = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (decodedData.role !== "ADMIN" && decodedData.role !== "MANAGER") {
+    const user = await User.findById(decodedData.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (user.status === "Suspended") {
+      return res.status(403).json({ success: false, message: "Your account is suspended" });
+    }
+
+    if (user.role !== "ADMIN" && user.role !== "MANAGER") {
       return res.status(401).json({
         success: false,
         message: "Not Authorized Login Again",
       });
     }
 
-    req.user = decodedData;
+    req.user = user;
     next();
   } catch (error) {
     console.log(error);
