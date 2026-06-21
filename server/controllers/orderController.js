@@ -282,6 +282,10 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Order not found", 404));
   }
 
+  if (order.orderStatus === "Cancelled" || order.paymentStatus === "Failed") {
+    return next(new ErrorHandler("Order is already cancelled or payment rejected", 400));
+  }
+
   if (action === "approve") {
     order.paymentStatus = "Success";
     order.orderStatus = "Confirmed";
@@ -310,14 +314,17 @@ export const adminVerifyPayment = catchAsyncErrors(async (req, res, next) => {
   order.paymentStatus = "Failed";
   order.orderStatus = "Cancelled";
   order.rejectionReason = rejectionReason || "Payment could not be verified";
-  await order.save();
 
-  // Restore stock
-  for (const item of order.items) {
-    if (item.part) {
-      await Part.findByIdAndUpdate(item.part, { $inc: { stock: item.quantity } });
+  // Restore stock if not already restored
+  if (!order.stockRestored) {
+    for (const item of order.items) {
+      if (item.part) {
+        await Part.findByIdAndUpdate(item.part, { $inc: { stock: item.quantity } });
+      }
     }
+    order.stockRestored = true;
   }
+  await order.save();
 
   try {
     await sendEmail({
@@ -372,6 +379,10 @@ export const adminUpdateOrderStatus = catchAsyncErrors(
       return next(new ErrorHandler("Order not found", 404));
     }
 
+    if (order.orderStatus === "Cancelled") {
+      return next(new ErrorHandler("Cannot update status of a cancelled order", 400));
+    }
+
     // Guard: an order whose payment has not succeeded should not be marked as
     // physically fulfilled. It can still be Cancelled.
     if (
@@ -383,16 +394,17 @@ export const adminUpdateOrderStatus = catchAsyncErrors(
 
     const previousStatus = order.orderStatus;
     order.orderStatus = orderStatus;
-    await order.save();
 
-    if (previousStatus !== "Cancelled" && orderStatus === "Cancelled") {
+    if (orderStatus === "Cancelled" && !order.stockRestored) {
       // Restore stock
       for (const item of order.items) {
         if (item.part) {
           await Part.findByIdAndUpdate(item.part, { $inc: { stock: item.quantity } });
         }
       }
+      order.stockRestored = true;
     }
+    await order.save();
 
     res.status(200).json({
       success: true,

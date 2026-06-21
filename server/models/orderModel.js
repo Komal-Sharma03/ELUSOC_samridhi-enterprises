@@ -63,6 +63,7 @@ const orderSchema = new mongoose.Schema(
     upiReference: { type: String, default: "" },
     verifiedAt: { type: Date, default: null },
     rejectionReason: { type: String, default: "" },
+    stockRestored: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
