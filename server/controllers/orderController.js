@@ -79,8 +79,28 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
   }
 
   // All checks passed, deduct stock atomically
-  for (const item of cart.items) {
-    await Part.findByIdAndUpdate(item.part._id, { $inc: { stock: -item.quantity } });
+  const updatedParts = [];
+  try {
+    for (const item of cart.items) {
+      const part = await Part.findOneAndUpdate(
+        { _id: item.part._id, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+      if (!part) {
+        throw new Error(`Insufficient stock for ${item.name || (item.part ? item.part.name : "Item")}`);
+      }
+      updatedParts.push({ id: item.part._id, quantity: item.quantity });
+    }
+  } catch (error) {
+    // Rollback any stocks we already successfully deducted
+    for (const updated of updatedParts) {
+      await Part.findByIdAndUpdate(updated.id, { $inc: { stock: updated.quantity } });
+    }
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 
   // Snapshot the cart items onto the order (unit price + image), so the order
