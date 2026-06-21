@@ -80,6 +80,8 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
 
   // All checks passed, deduct stock atomically
   const updatedParts = [];
+  let couponClaimed = null;
+
   try {
     for (const item of cart.items) {
       const part = await Part.findOneAndUpdate(
@@ -88,152 +90,143 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
         { new: true }
       );
       if (!part) {
-        throw new Error(`Insufficient stock for ${item.name || (item.part ? item.part.name : "Item")}`);
+        throw new ErrorHandler(`Insufficient stock for ${item.name || (item.part ? item.part.name : "Item")}`, 400);
       }
       updatedParts.push({ id: item.part._id, quantity: item.quantity });
     }
-  } catch (error) {
-    // Rollback any stocks we already successfully deducted
-    for (const updated of updatedParts) {
-      await Part.findByIdAndUpdate(updated.id, { $inc: { stock: updated.quantity } });
-    }
-    return res.status(400).json({
-      success: false,
-      message: error.message,
+
+    // Snapshot the cart items onto the order (unit price + image), so the order
+    // record stays correct even if a part is later edited or removed.
+    const items = cart.items.map((item) => {
+      const unitPrice =
+        item.part && typeof item.part.price === "number"
+          ? item.part.price
+          : item.quantity > 0
+          ? item.price / item.quantity
+          : item.price;
+      const image =
+        item.part && item.part.images && item.part.images.length > 0
+          ? item.part.images[0].url
+          : "";
+      return {
+        part: item.part ? item.part._id : undefined,
+        name: item.name || (item.part ? item.part.name : "Item"),
+        price: unitPrice,
+        quantity: item.quantity,
+        image,
+      };
     });
-  }
 
-  // Snapshot the cart items onto the order (unit price + image), so the order
-  // record stays correct even if a part is later edited or removed.
-  const items = cart.items.map((item) => {
-    const unitPrice =
-      item.part && typeof item.part.price === "number"
-        ? item.part.price
-        : item.quantity > 0
-        ? item.price / item.quantity
-        : item.price;
-    const image =
-      item.part && item.part.images && item.part.images.length > 0
-        ? item.part.images[0].url
-        : "";
-    return {
-      part: item.part ? item.part._id : undefined,
-      name: item.name || (item.part ? item.part.name : "Item"),
-      price: unitPrice,
-      quantity: item.quantity,
-      image,
-    };
-  });
-
-  // Derive the total from the snapshot itself so the receipt's line totals
-  // always sum to the grand total, regardless of any stale cart.total value.
-  const itemsTotal = items.reduce(
-    (sum, it) => sum + it.price * it.quantity,
-    0
-  );
-
-  // Re-validate the coupon (if any) server-side — never trust client discount amount.
-  let appliedCouponCode = "";
-  let discount = 0;
-  if (couponCode && String(couponCode).trim()) {
-    const coupon = await Coupon.findOne({
-      code: String(couponCode).trim().toUpperCase(),
-    });
-    if (!coupon) {
-      return res.status(400).json({ success: false, message: "Invalid coupon code" });
-    }
-    const redeemable = coupon.isRedeemable();
-    if (!redeemable.ok) {
-      return res.status(400).json({ success: false, message: redeemable.reason });
-    }
-    const computed = coupon.computeDiscount(itemsTotal);
-    if (computed <= 0) {
-      return res.status(400).json({ success: false, message: "This coupon does not apply to your order" });
-    }
-    const claim = await Coupon.findOneAndUpdate(
-      {
-        _id: coupon._id,
-        isActive: true,
-        discountType: coupon.discountType,
-        discountValue: coupon.discountValue,
-        minOrderAmount: coupon.minOrderAmount,
-        maxDiscount: coupon.maxDiscount,
-        $and: [
-          {
-            $or: [
-              { expiresAt: null },
-              { expiresAt: { $gt: new Date() } }
-            ]
-          },
-          {
-            $or: [
-              { usageLimit: 0 },
-              { $expr: { $lt: ["$usedCount", "$usageLimit"] } }
-            ]
-          }
-        ]
-      },
-      { $inc: { usedCount: 1 } },
-      { new: true }
+    // Derive the total from the snapshot itself so the receipt's line totals
+    // always sum to the grand total, regardless of any stale cart.total value.
+    const itemsTotal = items.reduce(
+      (sum, it) => sum + it.price * it.quantity,
+      0
     );
-    if (!claim) {
-      return res.status(400).json({ success: false, message: "This coupon is no longer valid or has reached its usage limit" });
+
+    // Re-validate the coupon (if any) server-side — never trust client discount amount.
+    let appliedCouponCode = "";
+    let discount = 0;
+    if (couponCode && String(couponCode).trim()) {
+      const coupon = await Coupon.findOne({
+        code: String(couponCode).trim().toUpperCase(),
+      });
+      if (!coupon) {
+        throw new ErrorHandler("Invalid coupon code", 400);
+      }
+      const redeemable = coupon.isRedeemable();
+      if (!redeemable.ok) {
+        throw new ErrorHandler(redeemable.reason, 400);
+      }
+      const computed = coupon.computeDiscount(itemsTotal);
+      if (computed <= 0) {
+        throw new ErrorHandler("This coupon does not apply to your order", 400);
+      }
+      const claim = await Coupon.findOneAndUpdate(
+        {
+          _id: coupon._id,
+          isActive: true,
+          discountType: coupon.discountType,
+          discountValue: coupon.discountValue,
+          minOrderAmount: coupon.minOrderAmount,
+          maxDiscount: coupon.maxDiscount,
+          $and: [
+            {
+              $or: [
+                { expiresAt: null },
+                { expiresAt: { $gt: new Date() } }
+              ]
+            },
+            {
+              $or: [
+                { usageLimit: 0 },
+                { $expr: { $lt: ["$usedCount", "$usageLimit"] } }
+              ]
+            }
+          ]
+        },
+        { $inc: { usedCount: 1 } },
+        { new: true }
+      );
+      if (!claim) {
+        throw new ErrorHandler("This coupon is no longer valid or has reached its usage limit", 400);
+      }
+      couponClaimed = claim;
+      appliedCouponCode = coupon.code;
+      discount = computed;
     }
-    appliedCouponCode = coupon.code;
-    discount = computed;
-  }
 
-  const grandTotal = Math.max(0, itemsTotal - discount);
+    const grandTotal = Math.max(0, itemsTotal - discount);
 
-  let paymentScreenshot = { public_id: "", url: "" };
-  let paymentStatus;
-  let orderStatus;
+    let paymentScreenshot = { public_id: "", url: "" };
+    let paymentStatus;
+    let orderStatus;
 
-  if (paymentMethod === "Online") {
-    if (!req.file) {
-      return next(new ErrorHandler("A payment screenshot is required for online payments", 400));
+    if (paymentMethod === "Online") {
+      if (!req.file) {
+        throw new ErrorHandler("A payment screenshot is required for online payments", 400);
+      }
+      const uploaded = await uploadImage(req.file);
+      if (!uploaded || !uploaded.secure_url) {
+        throw new ErrorHandler("Payment screenshot upload failed. Please try again.", 500);
+      }
+      paymentScreenshot = {
+        public_id: uploaded.public_id,
+        url: uploaded.secure_url,
+      };
+      paymentStatus = "Pending Verification";
+      orderStatus = "Pending Verification";
+    } else {
+      // COD
+      paymentStatus = "Pending";
+      orderStatus = "Confirmed";
     }
-    const uploaded = await uploadImage(req.file);
-    if (!uploaded || !uploaded.secure_url) {
-      return next(new ErrorHandler("Payment screenshot upload failed. Please try again.", 500));
-    }
-    paymentScreenshot = {
-      public_id: uploaded.public_id,
-      url: uploaded.secure_url,
-    };
-    paymentStatus = "Pending Verification";
-    orderStatus = "Pending Verification";
-  } else {
-    // COD
-    paymentStatus = "Pending";
-    orderStatus = "Confirmed";
-  }
 
-  const order = await Order.create({
-    user: req.user._id,
-    items,
-    shippingAddress,
-    itemsTotal,
-    couponCode: appliedCouponCode,
-    discount,
-    grandTotal,
-    paymentMethod,
-    paymentStatus,
-    orderStatus,
-    paymentScreenshot,
-    upiReference: upiReference || "",
-  });
+    const order = await Order.create({
+      user: req.user._id,
+      items,
+      shippingAddress,
+      itemsTotal,
+      couponCode: appliedCouponCode,
+      discount,
+      grandTotal,
+      paymentMethod,
+      paymentStatus,
+      orderStatus,
+      paymentScreenshot,
+      upiReference: upiReference || "",
+    });
 
-  // Link the order to the user's history WITHOUT calling user.save(), which
-  // would trigger the model's pre-save hook and re-hash the password.
-  await User.findByIdAndUpdate(req.user._id, {
-    $push: { orderHistory: order._id },
-  });
+    // Link the order to the user's history WITHOUT calling user.save(), which
+    // would trigger the model's pre-save hook and re-hash the password.
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { orderHistory: order._id },
+    });
 
-  // Clear the cart now that it has been converted into an order.
-  cart.items = [];
-  cart.total = 0;
-  await cart.save();
+    // Clear the cart now that it has been converted into an order.
+    cart.items = [];
+    cart.total = 0;
+    await cart.save();
 
   // Fire-and-forget email; a failure here must never break order creation.
   try {
@@ -265,14 +258,25 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
     console.error("Order email failed:", mailErr.message);
   }
 
-  res.status(201).json({
-    success: true,
-    message:
-      paymentMethod === "COD"
-        ? "Order placed successfully"
-        : "Order placed. Payment is pending verification.",
-    order,
-  });
+    res.status(201).json({
+      success: true,
+      message:
+        paymentMethod === "COD"
+          ? "Order placed successfully"
+          : "Order placed. Payment is pending verification.",
+      order,
+    });
+  } catch (error) {
+    // Rollback any stocks we already successfully deducted
+    for (const updated of updatedParts) {
+      await Part.findByIdAndUpdate(updated.id, { $inc: { stock: updated.quantity } });
+    }
+    // Rollback coupon usedCount
+    if (couponClaimed) {
+      await Coupon.findByIdAndUpdate(couponClaimed._id, { $inc: { usedCount: -1 } });
+    }
+    return next(error);
+  }
 });
 
 // GET /api/orders/my-orders  (auth)
