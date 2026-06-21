@@ -3,10 +3,11 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import cloudinary from "cloudinary";
-import errorMiddleware from "./middleware/error.js";
 import connectDB from "./config/connectDB.js";
+import errorMiddleware from "./middleware/error.js";
 
 dotenv.config();
+
 
 process.on("uncaughtException", (err) => {
   console.error(`Error: ${err.message}`);
@@ -43,9 +44,9 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(errorMiddleware);
 
 app.get("/", (req, res) => {
+
   res.send("Server is running: " + PORT);
 });
 
@@ -72,7 +73,11 @@ app.use("/api/coupon", couponRouter)
 app.use("/api/support", supportTicketRouter)
 app.use("/api/address", addressRouter)
 
+// Error middleware should be registered AFTER routes so it can catch downstream errors.
+app.use(errorMiddleware);
+
 connectDB().then(() => {
+
   app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 });
 
@@ -80,7 +85,12 @@ process.on("unhandledRejection", (err) => {
   console.error(`Error: ${err.message}`);
   console.error(`Shutting down the server due to Unhandled Promise Rejection`);
 
-  server.close(() => {
+  if (app && typeof app.close === "function") {
+    app.close(() => {
+      process.exit(1);
+    });
+  } else {
     process.exit(1);
-  });
+  }
 });
+
