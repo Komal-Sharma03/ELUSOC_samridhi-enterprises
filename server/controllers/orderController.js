@@ -408,6 +408,15 @@ const FULFILLMENT_STATUSES = [
   "Cancelled",
 ];
 
+const VALID_TRANSITIONS = {
+  "Pending Verification": ["Confirmed", "Cancelled"],
+  "Confirmed": ["Processing", "Cancelled"],
+  "Processing": ["Shipped", "Cancelled"],
+  "Shipped": ["Delivered", "Cancelled"],
+  "Delivered": [],
+  "Cancelled": [],
+};
+
 export const adminUpdateOrderStatus = catchAsyncErrors(
   async (req, res, next) => {
     const { orderStatus } = req.body;
@@ -424,8 +433,10 @@ export const adminUpdateOrderStatus = catchAsyncErrors(
       return next(new ErrorHandler("Order not found", 404));
     }
 
-    if (order.orderStatus === "Cancelled") {
-      return next(new ErrorHandler("Cannot update status of a cancelled order", 400));
+    const currentStatus = order.orderStatus;
+    const allowed = VALID_TRANSITIONS[currentStatus] || [];
+    if (!allowed.includes(orderStatus)) {
+      return next(new ErrorHandler(`Invalid status transition from ${currentStatus} to ${orderStatus}. Allowed transitions: ${allowed.join(", ") || "none"}`, 400));
     }
 
     // Guard: an order whose payment has not succeeded should not be marked as
