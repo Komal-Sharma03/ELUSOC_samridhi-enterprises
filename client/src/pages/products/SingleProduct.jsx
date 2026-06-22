@@ -40,12 +40,7 @@ const SingleProduct = () => {
       toast.error(error);
       dispatch(clearPartError());
     }
-    if (success) {
-      toast.success("Review submitted successfully!");
-      dispatch(clearPartSuccess());
-      dispatch(fetchPartById(id));
-    }
-  }, [error, success, dispatch, id]);
+  }, [error, dispatch]);
 
   useEffect(() => {
     if (part && isAuthenticated && user?._id) {
@@ -98,8 +93,16 @@ const SingleProduct = () => {
       toast.error("Review comment cannot exceed 500 characters");
       return;
     }
-    dispatch(createOrUpdateReview({ partId: id, rating, comment }));
-    window.location.reload();
+    dispatch(createOrUpdateReview({ partId: id, rating, comment })).then((result) => {
+      if (createOrUpdateReview.fulfilled.match(result)) {
+        toast.success("Review submitted successfully!");
+        dispatch(fetchPartById(id));
+        dispatch(clearPartSuccess());
+      } else if (createOrUpdateReview.rejected.match(result)) {
+        toast.error(result.payload || "Failed to submit review");
+        dispatch(clearPartError());
+      }
+    });
   };
 
   const handleDeleteReview = () => {
@@ -108,8 +111,18 @@ const SingleProduct = () => {
       navigate("/login");
       return;
     }
-    dispatch(deleteReview(id));
-    window.location.reload();
+    dispatch(deleteReview(id)).then((result) => {
+      if (deleteReview.fulfilled.match(result)) {
+        toast.success("Review deleted successfully!");
+        dispatch(fetchPartById(id));
+        dispatch(clearPartSuccess());
+        setRating(0);
+        setComment("");
+      } else if (deleteReview.rejected.match(result)) {
+        toast.error(result.payload || "Failed to delete review");
+        dispatch(clearPartError());
+      }
+    });
   };
 
   const getStockStatus = () => {
