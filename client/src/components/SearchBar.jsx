@@ -68,27 +68,31 @@ const SearchBar = ({
     return { names: [...names.values()], categories: [...categories.values()] };
   }, [catalog]);
 
-  // Popular searches = the categories with the most products.
+ // Popular Searches: Top requested vehicle parts and accessories
   const popular = useMemo(() => {
-    const counts = new Map();
-    (catalog || []).forEach((p) => {
-      if (p?.category) counts.set(p.category, (counts.get(p.category) || 0) + 1);
-    });
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, MAX_POPULAR)
-      .map(([category]) => category);
-  }, [catalog]);
-
-  // Suggestions while typing: matching product names first, then categories.
+    return [
+      "Royal Enfield Brake",
+      "Pulsar Chain Kit",
+      "Hero Clutch Plate",
+      "Engine Oil",
+      "Disk Brake Pads"
+    ].slice(0, MAX_POPULAR);
+  }, []);
+// Suggestions while typing: matching products (name/brand) first, then categories.
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const nameMatches = index.names
-      .filter((n) => n.toLowerCase().includes(q))
+
+    const productMatches = (catalog || [])
+      .filter(
+        (p) =>
+          p?.name?.toLowerCase().includes(q) ||
+          p?.brand?.toLowerCase().includes(q)
+      )
       .slice(0, MAX_SUGGESTIONS)
-      .map((value) => ({ type: "product", value }));
-    const remaining = MAX_SUGGESTIONS - nameMatches.length;
+      .map((product) => ({ type: "product", value: product.name, product }));
+
+    const remaining = MAX_SUGGESTIONS - productMatches.length;
     const categoryMatches =
       remaining > 0
         ? index.categories
@@ -96,9 +100,10 @@ const SearchBar = ({
             .slice(0, remaining)
             .map((value) => ({ type: "category", value }))
         : [];
-    return [...nameMatches, ...categoryMatches];
-  }, [query, index]);
 
+    return [...productMatches, ...categoryMatches];
+  }, [query, catalog, index.categories]);
+  
   // Flat list the dropdown currently shows (drives keyboard navigation).
   const items = useMemo(() => {
     if (query.trim()) return suggestions;
@@ -300,7 +305,7 @@ const SearchBar = ({
                 </>
               ) : items.length > 0 ? (
                 items.map((item, idx) => (
-                  <li
+            <li
                     key={`${item.type}-${item.value}`}
                     id={`${listboxId}-option-${idx}`}
                     role="option"
@@ -308,18 +313,51 @@ const SearchBar = ({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => commit(item.value)}
                     onMouseEnter={() => setActiveIndex(idx)}
-                    className={`px-3 py-2 rounded-xl text-sm cursor-pointer flex items-center gap-2 ${
+                    className={`px-3 py-2 rounded-xl text-sm cursor-pointer flex items-center gap-3 ${
                       activeIndex === idx
                         ? "bg-blue-50 text-blue-700"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span className="truncate flex-grow">{item.value}</span>
-                    {item.type === "category" && (
-                      <span className="text-xs text-gray-400 shrink-0">
-                        in Categories
-                      </span>
+                    {item.type === "product" && item.product ? (
+                      <>
+                        {/* 1. Show Product Image or Placeholder */}
+                        {item.product?.images?.[0] ? (
+                          <img 
+                            src={item.product.images[0]?.url || item.product.images[0]} 
+                            alt={item.value} 
+                            className="w-10 h-10 object-cover rounded-md shrink-0 border border-gray-100" 
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center shrink-0">
+                            <Search className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                        
+                        {/* 2. Show Product Name and Brand */}
+                        <div className="flex flex-col flex-grow truncate">
+                          <span className="truncate font-medium">{item.value}</span>
+                          {item.product?.brand && (
+                            <span className="text-xs opacity-75">{item.product.brand}</span>
+                          )}
+                        </div>
+
+                        {/* 3. Show Product Price */}
+                        {item.product?.price && (
+                          <span className="font-semibold shrink-0">₹{item.product.price}</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {/* Standard View for Categories & Popular Searches */}
+                        <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="truncate flex-grow">{item.value}</span>
+                        {item.type === "category" && (
+                          <span className="text-xs text-gray-400 shrink-0">
+                            in Categories
+                          </span>
+                        )}
+                      </>
                     )}
                   </li>
                 ))
