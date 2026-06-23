@@ -8,6 +8,8 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import { uploadImage } from "../utils/cloudinary.js";
 import sendEmail from "../config/sendEmail.js";
 import orderReceiptHtml from "../template/orderReceiptTemplate.js";
+import generateAdminNewOrderEmail from "../template/adminNewOrderTemplate.js";
+import PaymentSettings from "../models/paymentSettingsModel.js";
 
 const REQUIRED_ADDRESS_FIELDS = [
   "fullName",
@@ -256,6 +258,33 @@ export const createOrder = catchAsyncErrors(async (req, res, next) => {
     }
   } catch (mailErr) {
     console.error("Order email failed:", mailErr.message);
+  }
+
+  // Notify store admins of the new order (best-effort, gated by the admin
+  // settings toggle). A failure here must never break order creation, and it
+  // runs in its own try/catch so it cannot trigger the stock-rollback below.
+  try {
+    const settings = await PaymentSettings.findOne();
+    const notifyAdmins = settings ? settings.notifyAdminsOnNewOrder !== false : true;
+    if (notifyAdmins) {
+      const admins = await User.find({
+        role: { $in: ["ADMIN", "MANAGER"] },
+      }).select("email name");
+      if (admins.length > 0) {
+        const adminHtml = generateAdminNewOrderEmail(order, req.user);
+        const adminSubject =
+          paymentMethod === "Online"
+            ? `New Order (Payment Verification Needed) - ${order._id}`
+            : `New Order Received - ${order._id}`;
+        for (const admin of admins) {
+          if (admin.email) {
+            await sendEmail({ sendTo: admin.email, subject: adminSubject, html: adminHtml });
+          }
+        }
+      }
+    }
+  } catch (adminMailErr) {
+    console.error("Admin new-order notification failed:", adminMailErr.message);
   }
 
     res.status(201).json({

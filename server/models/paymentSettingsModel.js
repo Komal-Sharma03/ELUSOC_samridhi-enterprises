@@ -9,6 +9,9 @@ const paymentSettingsSchema = new mongoose.Schema(
       public_id: { type: String, default: "" },
       url: { type: String, default: "" },
     },
+    // When true, admins (role ADMIN / MANAGER) receive an email notification
+    // every time a customer places a new order. Toggled from admin settings.
+    notifyAdminsOnNewOrder: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

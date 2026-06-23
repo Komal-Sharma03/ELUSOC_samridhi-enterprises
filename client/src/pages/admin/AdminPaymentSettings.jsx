@@ -20,13 +20,17 @@ const AdminPaymentSettings = () => {
   const [upiId, setUpiId] = useState("");
   const [qrFile, setQrFile] = useState(null);
   const [qrPreview, setQrPreview] = useState("");
+  const [notifyAdmins, setNotifyAdmins] = useState(true);
 
   useEffect(() => {
     dispatch(getPaymentSettings());
   }, [dispatch]);
 
   useEffect(() => {
-    if (settings) setUpiId(settings.upiId || "");
+    if (settings) {
+      setUpiId(settings.upiId || "");
+      setNotifyAdmins(settings.notifyAdminsOnNewOrder !== false);
+    }
   }, [settings]);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ const AdminPaymentSettings = () => {
 
   useEffect(() => {
     if (success) {
-      toast.success("Payment settings saved");
+      toast.success("Settings saved");
       dispatch(clearPaymentSettingsSuccess());
       setQrFile(null);
       setQrPreview("");
@@ -53,12 +57,11 @@ const AdminPaymentSettings = () => {
   };
 
   const handleSave = () => {
-    if (!upiId.trim() && !qrFile && !settings?.qrImage?.url) {
-      toast.error("Please provide a UPI ID and/or a QR image");
-      return;
-    }
+    // The notification toggle makes every save meaningful, so we no longer
+    // block when UPI/QR are empty — an admin may simply be flipping it.
     const fd = new FormData();
     fd.append("upiId", upiId);
+    fd.append("notifyAdminsOnNewOrder", notifyAdmins);
     if (qrFile) fd.append("qrImage", qrFile);
     dispatch(adminUpdatePaymentSettings(fd));
   };
@@ -125,6 +128,38 @@ const AdminPaymentSettings = () => {
                   this at checkout when paying online.
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Notifications
+            </label>
+            <div className="flex items-center justify-between gap-4 bg-blue-50/60 rounded-xl px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Email admins on new orders
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  When on, all admins receive an email each time a customer
+                  places an order (online orders are flagged for verification).
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={notifyAdmins}
+                onClick={() => setNotifyAdmins((v) => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                  notifyAdmins ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    notifyAdmins ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
           </div>
 

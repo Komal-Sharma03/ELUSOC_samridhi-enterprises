@@ -45,7 +45,7 @@ export const adminUpdatePaymentSettings = createAsyncThunk(
 const paymentSettingsSlice = createSlice({
   name: "paymentSettings",
   initialState: {
-    settings: { upiId: "", qrImage: { public_id: "", url: "" } },
+    settings: { upiId: "", qrImage: { public_id: "", url: "" }, notifyAdminsOnNewOrder: true },
     loading: false,
     error: null,
     success: false,
