@@ -11,6 +11,7 @@ import Loader from "../../extras/Loader";
 import { Link, useSearchParams } from "react-router-dom";
 import { GitCompare, Check, Heart } from "lucide-react";
 import SEO from "../../components/SEO";
+import ProductSkeleton from "../../components/ProductSkeleton";
 
 const categories = [
   "Abs",
@@ -610,7 +611,9 @@ const ProductsPage = () => {
           </div>
         </div>
 
-        {sortedAndFilteredParts.length === 0 ? (
+        {partsLoading ? (
+          <ProductSkeleton count={pageSize} />
+        ) : sortedAndFilteredParts.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -856,7 +859,7 @@ const ProductsPage = () => {
           </div>
         )}
 
-        {(partsLoading || bikeLoading) && <Loader />}
+        {bikeLoading && <Loader />}
       </div>
     </div>
   );
