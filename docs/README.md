@@ -12,6 +12,7 @@ implemented in `server/` and `client/`.
 | [API Reference](./API_REFERENCE.md) | Every REST endpoint across all 10 routers — method, path, access level, request fields |
 | [Database Schema](./DATABASE_SCHEMA.md) | All 10 Mongoose models — fields, types, enums, relationships |
 | [Admin Workflows](./ADMIN_WORKFLOWS.md) | Admin/manager operations: users, catalogue, orders & payment verification, coupons, support, analytics |
+| [Workflow Guide](./WORKFLOWS.md) | In-depth breakdown of order processing, concurrency, atomic inventory reservation, stock restoration, payment verification, and status transition guards |
 | [Environment Variables](./ENVIRONMENT.md) | Every backend/frontend env var and where it is used |
 
 ## Where other topics live
