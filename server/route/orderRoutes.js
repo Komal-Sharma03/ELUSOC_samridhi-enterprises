@@ -6,6 +6,7 @@ import {
   createOrder,
   getMyOrders,
   getOrderById,
+  cancelMyOrder,
   adminGetAllOrders,
   adminVerifyPayment,
   adminUpdateOrderStatus,
@@ -21,6 +22,10 @@ const orderRouter = express.Router();
 // Customer
 orderRouter.post("/new", auth, upload.single("paymentScreenshot"), createOrder);
 orderRouter.get("/my-orders", auth, getMyOrders);
+// Customer-initiated cancellation of an own order (owner + status checked in
+// the controller). Distinct method/path from the dynamic GET "/:id" below, so
+// there is no route shadowing.
+orderRouter.put("/:id/cancel", auth, cancelMyOrder);
 
 // Admin
 orderRouter.get("/admin/all", auth, admin, adminGetAllOrders);

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -7,13 +7,20 @@ import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import {
   getMyOrders,
+  cancelMyOrder,
   clearOrderError,
 } from "../../store/order/orderSlice";
 import Loader from "../../extras/Loader";
+import ConfirmationModal from "../../extras/ConfirmationModel";
 
 // The fulfilment stages a normal order moves through, in order. Used by the
 // customer-facing tracker so a buyer can see how far along their order is.
 const TRACKER_STAGES = ["Confirmed", "Processing", "Shipped", "Delivered"];
+
+// Statuses in which a customer may still cancel their own order. Mirrors the
+// server-side eligibility in cancelMyOrder so the button only appears when the
+// action will actually be accepted.
+const CUSTOMER_CANCELLABLE = ["Pending Verification", "Confirmed"];
 
 // Horizontal step tracker showing an order's progress through its lifecycle.
 // Cancelled / Pending-Verification orders skip the tracker (handled by the
@@ -206,6 +213,23 @@ const OrderHistory = () => {
   const { myOrders, loading, error } = useSelector((state) => state.order);
   const { user } = useSelector((state) => state.auth);
 
+  // The order awaiting cancel confirmation (null = dialog closed), and the id
+  // of the order currently being cancelled (to disable its button in flight).
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
+
+  const handleConfirmCancel = () => {
+    if (!cancelTarget) return;
+    const id = cancelTarget._id;
+    setCancelTarget(null);
+    setCancellingId(id);
+    dispatch(cancelMyOrder(id))
+      .unwrap()
+      .then(() => toast.success("Order cancelled successfully"))
+      .catch(() => {}) // errors surface via the error effect below
+      .finally(() => setCancellingId(null));
+  };
+
   useEffect(() => {
     dispatch(getMyOrders());
   }, [dispatch]);
@@ -252,6 +276,7 @@ const OrderHistory = () => {
             const canDownload =
               order.orderStatus !== "Cancelled" &&
               order.orderStatus !== "Pending Verification";
+            const canCancel = CUSTOMER_CANCELLABLE.includes(order.orderStatus);
             return (
               <motion.div
                 key={order._id}
@@ -325,23 +350,49 @@ const OrderHistory = () => {
                   <div className="text-lg font-bold text-gray-900">
                     Total: ₹{order.itemsTotal.toLocaleString()}
                   </div>
-                  <button
-                    onClick={() => generateReceiptPDF(order, user)}
-                    disabled={!canDownload}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    title={
-                      canDownload
-                        ? "Download receipt"
-                        : "Receipt available after the order is confirmed"
-                    }
-                  >
-                    Download Receipt
-                  </button>
+                  <div className="flex flex-wrap gap-3">
+                    {canCancel && (
+                      <button
+                        onClick={() => setCancelTarget(order)}
+                        disabled={cancellingId === order._id}
+                        className="px-5 py-2.5 rounded-xl border border-red-500 text-red-600 font-semibold text-sm hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        title="Cancel this order"
+                      >
+                        {cancellingId === order._id
+                          ? "Cancelling..."
+                          : "Cancel Order"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => generateReceiptPDF(order, user)}
+                      disabled={!canDownload}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      title={
+                        canDownload
+                          ? "Download receipt"
+                          : "Receipt available after the order is confirmed"
+                      }
+                    >
+                      Download Receipt
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             );
           })}
         </div>
+
+        <ConfirmationModal
+          isOpen={Boolean(cancelTarget)}
+          onClose={() => setCancelTarget(null)}
+          onConfirm={handleConfirmCancel}
+          title="Cancel this order?"
+          message={
+            cancelTarget
+              ? `Order ${cancelTarget._id} will be cancelled and any reserved stock released. This action cannot be undone. If you have already paid, our team will process your refund as per policy.`
+              : ""
+          }
+        />
       </div>
     </div>
   );

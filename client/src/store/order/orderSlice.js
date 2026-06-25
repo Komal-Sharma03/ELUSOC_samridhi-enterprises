@@ -60,6 +60,25 @@ export const getOrderById = createAsyncThunk(
   }
 );
 
+// Cancel one of the logged-in user's own orders. The server only permits this
+// while the order is in an early, reversible state (Pending Verification /
+// Confirmed) and enforces ownership.
+export const cancelMyOrder = createAsyncThunk(
+  "order/cancelMine",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_URL}/${id}/cancel`,
+        {},
+        authConfig()
+      );
+      return response.data.order;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 // Admin
 export const adminGetAllOrders = createAsyncThunk(
   "order/adminGetAll",
@@ -226,6 +245,23 @@ const orderSlice = createSlice({
       })
       .addCase(getOrderById.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Cancel my order (customer-initiated). Intentionally does NOT toggle the
+      // shared `loading` flag, so the Orders page is not replaced by a
+      // full-page loader mid-cancel; the page tracks the in-flight order
+      // locally and the card simply updates to "Cancelled" on success.
+      .addCase(cancelMyOrder.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(cancelMyOrder.fulfilled, (state, action) => {
+        const updated = action.payload;
+        state.myOrders = state.myOrders.map((o) =>
+          o._id === updated._id ? { ...o, ...updated } : o
+        );
+      })
+      .addCase(cancelMyOrder.rejected, (state, action) => {
         state.error = action.payload;
       })
 
