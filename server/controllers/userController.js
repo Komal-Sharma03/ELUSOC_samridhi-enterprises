@@ -168,7 +168,6 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   }
 
   const user = await UserModel.findOne({ email }).select("+password");
-  console.log("User Found:", user);
 
   if (!user) {
     return next(new ErrorHandler("User is not registered", 400));
@@ -178,12 +177,53 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Your account is not active. Please contact the admin.", 400));
   }
 
+  // Account lockout: configurable threshold + duration (defaults: 5 attempts, 15 min).
+  const maxAttempts = Number(process.env.LOGIN_MAX_ATTEMPTS) || 5;
+  const lockMinutes = Number(process.env.LOGIN_LOCK_MINUTES) || 15;
+
+  // If a lock is currently active, reject before checking the password so a
+  // locked account cannot keep guessing.
+  if (user.lockUntil && user.lockUntil.getTime() > Date.now()) {
+    const minutesLeft = Math.ceil((user.lockUntil.getTime() - Date.now()) / 60000);
+    return next(
+      new ErrorHandler(
+        `Account temporarily locked due to too many failed login attempts. Try again in ${minutesLeft} minute(s).`,
+        429
+      )
+    );
+  }
+
+  // A previously set lock has now expired — clear it before proceeding.
+  if (user.lockUntil && user.lockUntil.getTime() <= Date.now()) {
+    user.lockUntil = null;
+    user.failedAttempts = 0;
+  }
+
   const checkPassword = await user.comparePassword(password);
 
   if (!checkPassword) {
+    user.failedAttempts = (user.failedAttempts || 0) + 1;
+
+    // Threshold reached — lock the account and reset the counter.
+    if (user.failedAttempts >= maxAttempts) {
+      user.lockUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+      user.failedAttempts = 0;
+      await user.save();
+      return next(
+        new ErrorHandler(
+          `Account temporarily locked due to too many failed login attempts. Try again in ${lockMinutes} minute(s).`,
+          429
+        )
+      );
+    }
+
+    await user.save();
     return next(new ErrorHandler("Incorrect email or password", 400));
   }
 
+  // Successful login — clear any failed-attempt state.
+  user.failedAttempts = 0;
+  user.lockUntil = null;
   user.lastLogin = new Date();
   await user.save();
 
