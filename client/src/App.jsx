@@ -11,6 +11,7 @@ import { getSingleDetail } from "./store/auth-slice/user";
 import SupportAssistant from "./components/SupportAssistant";
 import CompareTray from "./components/CompareTray";
 import Loader from "./extras/Loader";
+import SessionTimeoutHandler from "./components/SessionTimeoutHandler";
 
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -113,19 +114,11 @@ function App() {
         />
         <Route
           path="/cart"
-          element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          }
+          element={<Cart />}
         />
         <Route
           path="/wishlist"
-          element={
-            <ProtectedRoute>
-              <WishlistPage />
-            </ProtectedRoute>
-          }
+          element={<WishlistPage />}
         />
         <Route
           path="/checkout"
@@ -246,7 +239,8 @@ function App() {
 
       <Footer />
 
-      {/* Site-wide rule-based support assistant (floating widget) */}
+      {/* Site-wide session inactivity timeout handler */}
+      <SessionTimeoutHandler />
       <SupportAssistant />
       <CompareTray />
     </div>
