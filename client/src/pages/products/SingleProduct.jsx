@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { getCustomerStockStatus, getStockBadge } from "@/utils/stockStatus";
 import {
   fetchPartById,
   fetchSimilarParts,
@@ -125,23 +126,9 @@ const SingleProduct = () => {
     });
   };
 
-  const getStockStatus = () => {
-    if (part.stock === 0)
-      return { text: "Out of Stock", color: "text-red-500", bg: "bg-red-50" };
-    if (part.stock <= 5)
-      return {
-        text: "Only few left!",
-        color: "text-orange-500",
-        bg: "bg-orange-50",
-      };
-    if (part.stock <= 15)
-      return {
-        text: "Limited Stock",
-        color: "text-yellow-600",
-        bg: "bg-yellow-50",
-      };
-    return { text: "In Stock", color: "text-emerald-500", bg: "bg-emerald-50" };
-  };
+  // Delegate to the shared utility — thresholds and labels live in
+  // client/src/utils/stockStatus.js (getCustomerStockStatus).
+  const getStockStatus = () => getCustomerStockStatus(part.stock);
 
   const handleQuantityChange = (e) => {
     const value = e.target.value;
@@ -614,16 +601,10 @@ const SingleProduct = () => {
                           </span>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              item.stock > 15
-                                ? "bg-green-100 text-green-800"
-                                : item.stock >= 5
-                                ? "bg-yellow-100 text-yellow-800"
-                                : item.stock > 0
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-red-100 text-red-800"
+                              getStockBadge(item.stock).badgeCls
                             }`}
                           >
-                            {item.stock > 0 ? "In Stock" : "Out of Stock"}
+                            {getStockBadge(item.stock).label}
                           </span>
                         </div>
                         <div className="text-sm text-gray-500 truncate">

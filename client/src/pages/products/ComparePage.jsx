@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { getCompareBadge } from "@/utils/stockStatus";
 import {
   Scale,
   ArrowLeft,
@@ -16,12 +17,6 @@ import {
   removeFromCompare,
   clearCompare,
 } from "@/store/product/compareSlice";
-
-const stockLabel = (stock) => {
-  if (stock > 15) return { text: "In Stock", cls: "text-green-700" };
-  if (stock >= 5) return { text: "Low Stock", cls: "text-yellow-700" };
-  return { text: "Out of Stock", cls: "text-red-700" };
-};
 
 const ComparePage = () => {
   const dispatch = useDispatch();
@@ -72,7 +67,7 @@ const ComparePage = () => {
     {
       label: "Availability",
       render: (p) => {
-        const s = stockLabel(p.stock);
+        const s = getCompareBadge(p.stock);
         return <span className={`font-medium ${s.cls}`}>{s.text}</span>;
       },
     },

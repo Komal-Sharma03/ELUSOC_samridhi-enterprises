@@ -1,6 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  getStockBadge,
+  IN_STOCK_THRESHOLD,
+  LOW_STOCK_THRESHOLD,
+} from "@/utils/stockStatus";
+import {
   addPart,
   fetchParts,
   updatePart,
@@ -272,11 +277,12 @@ const AdminPartPage = () => {
         part.price >= priceRange[0] && part.price <= priceRange[1];
       const matchesStockStatus = filterStockStatus
         ? filterStockStatus === "inStock"
-          ? part.stock > 15
+          ? part.stock > IN_STOCK_THRESHOLD
           : filterStockStatus === "lowStock"
-          ? part.stock >= 5 && part.stock <= 15
+          ? part.stock >= LOW_STOCK_THRESHOLD &&
+            part.stock <= IN_STOCK_THRESHOLD
           : filterStockStatus === "outOfStock"
-          ? part.stock < 5
+          ? part.stock < LOW_STOCK_THRESHOLD
           : true
         : true;
       return (
@@ -855,18 +861,10 @@ const AdminPartPage = () => {
                         </span>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            part.stock > 15
-                              ? "bg-green-100 text-green-800"
-                              : part.stock >= 5
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                            getStockBadge(part.stock).badgeCls
                           }`}
                         >
-                          {part.stock > 15
-                            ? "In Stock"
-                            : part.stock >= 5
-                            ? "Low Stock"
-                            : "Out of Stock"}
+                          {getStockBadge(part.stock).label}
                         </span>
                       </div>
                       <div className="text-sm text-gray-600">
