@@ -38,6 +38,25 @@ export const addPart = catchAsyncErrors(async (req, res, next) => {
 
 // Get all parts
 export const getAllParts = catchAsyncErrors(async (req, res) => {
+  const { vehicleId } = req.query;
+
+  const filter = {};
+
+  if (vehicleId) {
+    filter.vehicleCompatibility = vehicleId;
+  }
+
+  const parts = await Part.find(filter).populate(
+    "vehicleCompatibility",
+    "name"
+  );
+
+  res.status(200).json({
+    success: true,
+    count: parts.length,
+    parts,
+  });
+});
   const parts = await Part.find().populate("vehicleCompatibility", "name");
   res.status(200).json({ success: true, count: parts.length, parts });
 });
@@ -207,5 +226,5 @@ export const deleteReview = catchAsyncErrors(async (req, res, next) => {
     : 0;
 
   await part.save();
-  res.status(200).json({ success: true, message: "Review removed", part });
+res.status(200).json({ success: true, message: "Review removed", part });
 });
