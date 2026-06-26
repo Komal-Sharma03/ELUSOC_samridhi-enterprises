@@ -14,6 +14,7 @@ export const getPaymentSettings = catchAsyncErrors(async (req, res, next) => {
       upiId: "",
       qrImage: { public_id: "", url: "" },
       notifyAdminsOnNewOrder: true,
+      notifyAdminsOnNewTicket: true,
     },
   });
 });
@@ -38,6 +39,12 @@ export const adminUpdatePaymentSettings = catchAsyncErrors(
       settings.notifyAdminsOnNewOrder =
         req.body.notifyAdminsOnNewOrder === true ||
         req.body.notifyAdminsOnNewOrder === "true";
+    }
+
+    if (typeof req.body.notifyAdminsOnNewTicket !== "undefined") {
+      settings.notifyAdminsOnNewTicket =
+        req.body.notifyAdminsOnNewTicket === true ||
+        req.body.notifyAdminsOnNewTicket === "true";
     }
 
     if (req.file) {

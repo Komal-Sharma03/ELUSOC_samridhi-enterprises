@@ -12,6 +12,9 @@ const paymentSettingsSchema = new mongoose.Schema(
     // When true, admins (role ADMIN / MANAGER) receive an email notification
     // every time a customer places a new order. Toggled from admin settings.
     notifyAdminsOnNewOrder: { type: Boolean, default: true },
+    // When true, admins receive an email notification every time a customer
+    // raises a new support ticket. Toggled from admin settings.
+    notifyAdminsOnNewTicket: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
