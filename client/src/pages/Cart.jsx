@@ -141,7 +141,7 @@ const Cart = () => {
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 mt-18">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 mt-18">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,7 +181,7 @@ const Cart = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-lg sm:text-xl text-gray-600 mb-10 max-w-md"
+            className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-md"
           >
             Discover amazing products and start your shopping journey
           </motion.p>
@@ -219,7 +219,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 mt-18">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 mt-18">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -235,7 +235,7 @@ const Cart = () => {
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
           </h1>
-          <p className="text-base sm:text-lg text-gray-600">
+          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300">
             {cart.items.length} {cart.items.length === 1 ? "item" : "items"} in
             your cart
           </p>
@@ -298,7 +298,7 @@ const Cart = () => {
                     layout
                     className="group relative"
                   >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 rounded-2xl border border-gray-100 mb-6 last:mb-0 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 mb-6 last:mb-0 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
                       <div className="relative flex-shrink-0">
                         <motion.div
                           whileHover={{ scale: 1.1, rotate: 2 }}
@@ -327,7 +327,7 @@ const Cart = () => {
                           to={`/products/${item.part?._id}`}
                           className="block group-hover:text-blue-600 transition-colors duration-200"
                         >
-                          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 line-clamp-2">
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
                             {item.name || "Unknown Product"}
                           </h3>
                         </Link>
@@ -354,7 +354,7 @@ const Cart = () => {
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                           {item.part && item.part._id && (
-                            <div className="flex items-center bg-gray-50 rounded-2xl p-1">
+                            <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-2xl p-1">
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -450,24 +450,24 @@ const Cart = () => {
           <motion.div variants={itemVariants} className="xl:col-span-1">
             <div className="sticky top-8">
               <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-6 lg:p-8">
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
                   Order Summary
                 </h3>
 
                 <div className="space-y-4 mb-8" aria-live="polite" aria-atomic="true">
                   <div className="flex justify-between items-center text-lg">
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-gray-300">
                       Subtotal ({cart.items.length}{" "}
                       {cart.items.length === 1 ? "item" : "items"})
                     </span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
                       ₹{cart.total.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <div className="flex justify-between items-center text-xl sm:text-2xl font-bold">
-                      <span className="text-gray-900">Total</span>
+                      <span className="text-gray-900 dark:text-gray-100">Total</span>
                       <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                         ₹{cart.total.toLocaleString()}
                       </span>

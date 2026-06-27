@@ -146,7 +146,7 @@ const CategoryRows = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -163,7 +163,7 @@ const CategoryRows = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-blue-400/5"></div>
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl"></div>
@@ -183,7 +183,7 @@ const CategoryRows = () => {
               className="text-center py-20"
             >
               <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg
                     className="w-12 h-12 text-blue-500"
                     fill="none"
@@ -198,10 +198,10 @@ const CategoryRows = () => {
                     ></path>
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                   No Categories Available
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   No categories with more than 2 items available at the moment.
                 </p>
               </div>
@@ -251,9 +251,9 @@ const CategoryRows = () => {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center py-12 bg-white rounded-2xl shadow-sm border border-blue-100"
+                        className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-blue-100 dark:border-gray-700"
                       >
-                        <p className="text-gray-500 font-medium">
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">
                           No parts available in this category
                         </p>
                       </motion.div>
@@ -286,7 +286,7 @@ const CategoryRows = () => {
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     whileHover="hover"
                                     transition={{ delay: partIndex * 0.05 }}
-                                    className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden w-64 sm:w-72 lg:w-80 flex-shrink-0 border border-blue-100"
+                                    className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden w-64 sm:w-72 lg:w-80 flex-shrink-0 border border-blue-100 dark:border-gray-700"
                                   >
                                     <Link
                                       to={`/products/${part._id}`}
@@ -347,17 +347,17 @@ const CategoryRows = () => {
                                         className="p-4 sm:p-5 lg:p-6"
                                       >
                                         <div className="flex items-start justify-between mb-3">
-                                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-2 capitalize leading-tight group-hover:text-blue-600 transition-colors duration-200">
+                                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 line-clamp-2 capitalize leading-tight group-hover:text-blue-600 transition-colors duration-200">
                                             {part.name}
                                           </h3>
                                         </div>
 
                                         <div className="flex items-center justify-between mb-4">
                                           <div className="flex items-center space-x-2">
-                                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                                               ID:
                                             </span>
-                                            <span className="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                                            <span className="text-sm font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md">
                                               {part.product_id}
                                             </span>
                                           </div>
@@ -365,22 +365,22 @@ const CategoryRows = () => {
 
                                         <div className="flex items-center justify-between mb-4">
                                           <div className="flex flex-col">
-                                            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                                            <span className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                                               ₹{part.price.toLocaleString()}
                                             </span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
                                               Best Price
                                             </span>
                                           </div>
                                         </div>
 
-                                        <div className="border-t border-gray-100 pt-4">
-                                          <div className="text-xs text-gray-600">
-                                            <span className="font-semibold text-gray-700">
+                                        <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300">
                                               Compatible Vehicles:
                                             </span>
                                             <div className="mt-1">
-                                              <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
+                                              <span className="inline-block bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-md font-medium">
                                                 {part.vehicleCompatibility
                                                   .length > 0
                                                   ? part.vehicleCompatibility

@@ -48,7 +48,7 @@ const recommendLimiter = rateLimit({
 
 const partRouter = express.Router();
 
-partRouter.post("/add", browseLimiter, upload.array("images", 5), auth, admin, addPart);
+partRouter.post("/add", upload.array("images", 5), auth, admin, addPart);
 partRouter.get("/get", browseLimiter, getAllParts);
 partRouter.get("/get/:id", browseLimiter, getPartById);
 partRouter.get("/get/:id/similar", browseLimiter, getSimilarParts);
@@ -86,14 +86,13 @@ partRouter.get(
 );
 partRouter.put(
   "/update/:id",
-  browseLimiter,
   upload.array("images", 5),
   auth,
   admin,
   updatePart
 );
-partRouter.delete("/delete/:id", browseLimiter, auth, admin, deletePart);
-partRouter.post("/review/:id", browseLimiter, auth, createOrUpdateReview);
-partRouter.delete("/review/:id", browseLimiter, auth, deleteReview);
+partRouter.delete("/delete/:id", auth, admin, deletePart);
+partRouter.post("/review/:id", auth, createOrUpdateReview);
+partRouter.delete("/review/:id", auth, deleteReview);
 
 export default partRouter;

@@ -6,8 +6,10 @@ import cloudinary from "cloudinary";
 import connectDB from "./config/connectDB.js";
 import errorMiddleware from "./middleware/error.js";
 import requestLogger from "./middleware/requestLogger.js";
+import validateEnv from "./utils/validateEnv.js";
 
 dotenv.config();
+validateEnv();
 
 process.on("uncaughtException", (err) => {
   console.error(`Error: ${err.message}`);
@@ -26,7 +28,6 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.FRONTEND_WWW_URL,
   "http://localhost:5173",
 ];
 

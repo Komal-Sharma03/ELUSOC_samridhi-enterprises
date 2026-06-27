@@ -28,7 +28,7 @@ const supportLinks = [
 ];
 
 const linkClasses =
-  "group flex items-center text-gray-600 hover:text-gray-800 transition-all duration-300 p-2 rounded-lg hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+  "group flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
 
 const Footer = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -115,7 +115,7 @@ const Footer = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2 }}
-      className="relative bg-gradient-to-br from-gray-50 via-blue-50 to-white text-gray-800 overflow-hidden"
+      className="relative bg-gradient-to-br from-gray-50 via-blue-50 to-white text-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 dark:text-gray-200 overflow-hidden"
       onMouseMove={handleMouseMove}
       style={{ y: prefersReducedMotion ? 0 : yTransform }}
     >
@@ -201,7 +201,7 @@ const Footer = () => {
                     </span>
                   </div>
                 </div>
-                <p className="text-gray-600 leading-relaxed text-base">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base">
                   Delivering excellence in automotive solutions with
                   cutting-edge technology and unparalleled service quality.
                 </p>
@@ -209,7 +209,7 @@ const Footer = () => {
                   {[Star, Zap, Shield].map((Icon, i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center border border-blue-200"
+                      className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-800"
                     >
                       <Icon className="w-4 h-4 text-blue-600" />
                     </div>
@@ -320,9 +320,9 @@ const Footer = () => {
                   <li>
                     <a
                       href="tel:+919999999999"
-                      className="group flex items-center text-gray-600 hover:text-gray-800 transition-all duration-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="group flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mr-4 shadow-lg border border-blue-200">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 dark:from-blue-900/40 to-blue-200 dark:to-blue-800/40 rounded-xl flex items-center justify-center mr-4 shadow-lg border border-blue-200 dark:border-blue-800">
                         <Phone
                           className="w-5 h-5 text-blue-600"
                           aria-hidden="true"
@@ -341,7 +341,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="mailto:email@gmail.com"
-                      className="group flex items-center text-gray-600 hover:text-gray-800 transition-all duration-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="group flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center mr-4 shadow-lg border border-blue-500/20">
                         <Mail
@@ -360,7 +360,7 @@ const Footer = () => {
                     </a>
                   </li>
                   <li>
-                    <div className="group flex items-center text-gray-600">
+                    <div className="group flex items-center text-gray-600 dark:text-gray-300">
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center mr-4 shadow-lg border border-blue-500/20">
                         <MapPin
                           className="w-5 h-5 text-blue-600"
@@ -384,10 +384,10 @@ const Footer = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1 }}
-            className="mt-16 pt-8 border-t border-gray-200"
+            className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700"
           >
             <div className="flex flex-col sm:flex-row justify-between items-center space-y-6 sm:space-y-0">
-              <p className="text-gray-500 text-sm text-center sm:text-left">
+              <p className="text-gray-500 dark:text-gray-400 text-sm text-center sm:text-left">
                 © {new Date().getFullYear()} Samridhi Enterprises. All rights
                 reserved.
               </p>

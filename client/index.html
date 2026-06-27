@@ -10,6 +10,21 @@
     <meta property="og:description" content="Samridhi Enterprises - Your one-stop shop for premium bike parts and accessories." />
     <meta property="og:type" content="website" />
     <title>Samridhi Enterprises</title>
+    <script>
+      // Apply the saved (or OS-preferred) theme before first paint to avoid a
+      // flash of the wrong theme. Mirrors getInitialTheme in ThemeContext.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          if (t === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

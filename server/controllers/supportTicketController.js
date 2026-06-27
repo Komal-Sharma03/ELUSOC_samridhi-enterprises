@@ -1,6 +1,8 @@
 import SupportTicket from "../models/supportTicketModel.js";
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import ErrorHandler from "../utils/errorHandler.js";
+import notifyAdmins from "../utils/adminNotifier.js";
+import generateAdminNewTicketEmail from "../template/adminNewTicketTemplate.js";
 
 const VALID_CATEGORIES = [
   "Order",
@@ -44,6 +46,18 @@ export const createTicket = catchAsyncErrors(async (req, res, next) => {
       },
     ],
     lastActivityAt: new Date(),
+  });
+
+  // Notify store admins of the new ticket (best-effort, gated by the admin
+  // settings toggle). notifyAdmins never throws, so a mail failure here can
+  // never break ticket creation.
+  await notifyAdmins({
+    preferenceKey: "notifyAdminsOnNewTicket",
+    subject:
+      ticket.priority === "High"
+        ? `New Support Ticket (High Priority) - ${ticket.subject}`
+        : `New Support Ticket - ${ticket.subject}`,
+    html: generateAdminNewTicketEmail(ticket, req.user),
   });
 
   res.status(201).json({ success: true, ticket });

@@ -190,11 +190,12 @@ export const getSimilarParts = catchAsyncErrors(async (req, res, next) => {
     // Shared compatible vehicles (same fitment / brand). Capped so a part that
     // fits many vehicles can't dominate purely on overlap count.
     if (compatibilityIds.length > 0) {
-      const shared = (part.vehicleCompatibility || []).filter((v) =>
-        compatibilityIds.includes(v._id.toString())
-      ).length;
+      const shared = (part.vehicleCompatibility || [])
+        .filter((v) => v && v._id && compatibilityIds.includes(v._id.toString()))
+        .length;
       score += Math.min(shared, 3) * 2;
     }
+
 
     // Similar price range relative to the current product.
     if (price > 0) {

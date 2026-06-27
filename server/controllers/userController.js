@@ -394,9 +394,15 @@ export const verifyOtp = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Email not registered.", 400));
     }
 
-    const currentTime = new Date().toISOString();
+    // Compare expiry as Dates/timestamps (not Date vs ISO string)
+    if (!user.forgot_password_expiry) {
+      return next(new ErrorHandler("Otp has expired. Please req a new one.", 400));
+    }
 
-    if (user.forgot_password_expiry < currentTime) {
+    const now = Date.now();
+    const expiry = new Date(user.forgot_password_expiry).getTime();
+
+    if (Number.isNaN(expiry) || expiry < now) {
       return next(new ErrorHandler("Otp has expired. Please req a new one.", 400));
     }
 
@@ -405,8 +411,8 @@ export const verifyOtp = catchAsyncErrors(async (req, res, next) => {
     }
 
     await UserModel.findByIdAndUpdate(user._id, {
-      forgot_password_otp: "",
-      forgot_password_expiry: "",
+      forgot_password_otp: null,
+      forgot_password_expiry: null,
     });
 
     return res.json({

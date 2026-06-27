@@ -54,7 +54,7 @@ const MyProfile = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br  from-blue-50 via-white to-blue-100 py-12 px-4 sm:px-8 lg:px-16"
+      className="min-h-screen bg-gradient-to-br  from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 py-12 px-4 sm:px-8 lg:px-16"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -111,7 +111,7 @@ const MyProfile = () => {
           </motion.p>
 
           <motion.div
-            className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-blue-100"
+            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-blue-100 dark:border-blue-900"
             variants={containerVariants}
           >
             <motion.h3
@@ -124,7 +124,7 @@ const MyProfile = () => {
               {displayFields.map((field) => (
                 <motion.div
                   key={field}
-                  className="p-5 rounded-xl bg-blue-50 border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="p-5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-shadow duration-300"
                   variants={itemVariants}
                   whileHover={{ y: -5 }}
                 >
@@ -142,7 +142,7 @@ const MyProfile = () => {
 
         <div className="hidden sm:grid sm:grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div
-            className="bg-white rounded-3xl shadow-2xl border border-blue-100 p-8 lg:col-span-1"
+            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-blue-100 dark:border-blue-900 p-8 lg:col-span-1"
             variants={containerVariants}
           >
             <div className="text-center">
@@ -151,7 +151,7 @@ const MyProfile = () => {
                 variants={itemVariants}
               >
                 <div
-                  className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-blue-100 cursor-pointer border-4 border-blue-400 shadow-lg ring-2 ring-blue-200"
+                  className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/30 cursor-pointer border-4 border-blue-400 shadow-lg ring-2 ring-blue-200"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <AnimatePresence>
@@ -239,7 +239,7 @@ const MyProfile = () => {
           </motion.div>
 
           <motion.div
-            className="bg-white rounded-3xl shadow-2xl border border-blue-100 p-8 lg:col-span-2"
+            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-blue-100 dark:border-blue-900 p-8 lg:col-span-2"
             variants={containerVariants}
           >
             <motion.h3
@@ -252,7 +252,7 @@ const MyProfile = () => {
               {displayFields.map((field) => (
                 <motion.div
                   key={field}
-                  className="p-6 rounded-xl bg-blue-50 border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-shadow duration-300"
                   variants={itemVariants}
                   whileHover={{ y: -5 }}
                 >
@@ -268,7 +268,7 @@ const MyProfile = () => {
           </motion.div>
         </div>
 
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-2xl py-6 flex justify-around border-t border-blue-200 z-50">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-2xl py-6 flex justify-around border-t border-blue-200 dark:border-blue-800 z-50">
           {[
             { to: "/my-profile", icon: User, label: "Profile" },
             { to: "/my-orders", icon: ShoppingBag, label: "Orders" },
@@ -281,7 +281,7 @@ const MyProfile = () => {
               to={link.to}
               className={({ isActive }) =>
                 `flex flex-col items-center text-xs transition-all duration-300 ${
-                  isActive ? "text-blue-500" : "text-gray-500"
+                  isActive ? "text-blue-500" : "text-gray-500 dark:text-gray-400"
                 }`
               }
             >

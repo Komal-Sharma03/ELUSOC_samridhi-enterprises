@@ -40,14 +40,14 @@ const OrderTracker = ({ orderStatus }) => {
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                   reached
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-400"
+                    : "bg-gray-200 text-gray-400 dark:text-gray-500"
                 }`}
               >
                 {reached ? "✓" : i + 1}
               </div>
               <span
                 className={`mt-1.5 text-[11px] font-medium ${
-                  reached ? "text-blue-700" : "text-gray-400"
+                  reached ? "text-blue-700 dark:text-blue-300" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 {stage}
@@ -82,7 +82,7 @@ const statusColor = (status) => {
     case "Cancelled":
       return "bg-red-100 text-red-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100";
   }
 };
 
@@ -245,12 +245,12 @@ const OrderHistory = () => {
 
   if (!myOrders || myOrders.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-28 pb-16 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 pt-28 pb-16 px-4">
         <div className="max-w-2xl mx-auto text-center bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             No orders yet
           </h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
             Your placed orders will appear here.
           </p>
           <Link
@@ -265,7 +265,7 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-28 pb-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 pt-28 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-blue-600 bg-clip-text text-transparent mb-10">
           My Orders
@@ -286,11 +286,11 @@ const OrderHistory = () => {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div>
-                    <p className="text-xs text-gray-400">Order ID</p>
-                    <p className="font-mono text-sm text-gray-700 break-all">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Order ID</p>
+                    <p className="font-mono text-sm text-gray-700 dark:text-gray-200 break-all">
                       {order._id}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {formatDate(order.createdAt)}
                     </p>
                   </div>
@@ -309,7 +309,7 @@ const OrderHistory = () => {
                     >
                       Payment: {order.paymentStatus}
                     </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
                       {order.paymentMethod}
                     </span>
                   </div>
@@ -323,17 +323,17 @@ const OrderHistory = () => {
                     <OrderTracker orderStatus={order.orderStatus} />
                   )}
 
-                <div className="border-t border-gray-100 pt-4 space-y-2 mb-4">
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-2 mb-4">
                   {order.items.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex justify-between items-center text-sm"
                     >
-                      <span className="text-gray-700 pr-2">
+                      <span className="text-gray-700 dark:text-gray-200 pr-2">
                         {item.name}{" "}
-                        <span className="text-gray-400">x{item.quantity}</span>
+                        <span className="text-gray-400 dark:text-gray-500">x{item.quantity}</span>
                       </span>
-                      <span className="font-semibold text-gray-900 whitespace-nowrap">
+                      <span className="font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
                         ₹{(item.price * item.quantity).toLocaleString()}
                       </span>
                     </div>
@@ -346,8 +346,8 @@ const OrderHistory = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 pt-4">
-                  <div className="text-lg font-bold text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     Total: ₹{order.itemsTotal.toLocaleString()}
                   </div>
                   <div className="flex flex-wrap gap-3">

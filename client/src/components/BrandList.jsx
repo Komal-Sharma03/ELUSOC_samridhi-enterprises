@@ -73,7 +73,7 @@ export default function BrandList() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-12xl md:text-3xl font-bold mb-4 text-blue-500 text-center"
+        className="text-12xl md:text-3xl font-bold mb-4 text-blue-500 dark:text-blue-400 text-center"
       >
         Top Brands
       </motion.h2>
@@ -82,7 +82,7 @@ export default function BrandList() {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white text-blue-500 shadow-lg p-2 rounded-full z-10"
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 shadow-lg p-2 rounded-full z-10"
           onClick={() => handleScroll("left")}
         >
           <ChevronLeft size={22} />
@@ -93,7 +93,7 @@ export default function BrandList() {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-blue-500 shadow-lg p-2 rounded-full z-10"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 shadow-lg p-2 rounded-full z-10"
           onClick={() => handleScroll("right")}
         >
           <ChevronRight size={22} />
@@ -110,14 +110,14 @@ export default function BrandList() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="min-w-[120px] md:min-w-[140px] lg:min-w-[160px] flex-shrink-0 bg-white rounded-xl shadow-md p-4 flex flex-col items-center hover:scale-105 transition-transform duration-300"
+            className="min-w-[120px] md:min-w-[140px] lg:min-w-[160px] flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col items-center hover:scale-105 transition-transform duration-300"
           >
             <img
               src={brand.images[0]?.url}
               alt={brand.name}
               className="w-16 h-16 md:w-20 md:h-20 object-contain mb-3"
             />
-            <span className="text-sm md:text-base font-semibold text-blue-500 text-center uppercase">
+            <span className="text-sm md:text-base font-semibold text-blue-500 dark:text-blue-400 text-center uppercase">
               {brand.name}
             </span>
           </motion.div>

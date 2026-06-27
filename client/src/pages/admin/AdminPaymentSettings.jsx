@@ -21,6 +21,7 @@ const AdminPaymentSettings = () => {
   const [qrFile, setQrFile] = useState(null);
   const [qrPreview, setQrPreview] = useState("");
   const [notifyAdmins, setNotifyAdmins] = useState(true);
+  const [notifyTickets, setNotifyTickets] = useState(true);
 
   useEffect(() => {
     dispatch(getPaymentSettings());
@@ -30,6 +31,7 @@ const AdminPaymentSettings = () => {
     if (settings) {
       setUpiId(settings.upiId || "");
       setNotifyAdmins(settings.notifyAdminsOnNewOrder !== false);
+      setNotifyTickets(settings.notifyAdminsOnNewTicket !== false);
     }
   }, [settings]);
 
@@ -62,6 +64,7 @@ const AdminPaymentSettings = () => {
     const fd = new FormData();
     fd.append("upiId", upiId);
     fd.append("notifyAdminsOnNewOrder", notifyAdmins);
+    fd.append("notifyAdminsOnNewTicket", notifyTickets);
     if (qrFile) fd.append("qrImage", qrFile);
     dispatch(adminUpdatePaymentSettings(fd));
   };
@@ -157,6 +160,32 @@ const AdminPaymentSettings = () => {
                 <span
                   className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
                     notifyAdmins ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-4 bg-blue-50/60 rounded-xl px-4 py-3 mt-3">
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Email admins on new support tickets
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  When on, all admins receive an email each time a customer
+                  raises a support ticket (high-priority tickets are flagged).
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={notifyTickets}
+                onClick={() => setNotifyTickets((v) => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                  notifyTickets ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    notifyTickets ? "translate-x-5" : "translate-x-1"
                   }`}
                 />
               </button>
