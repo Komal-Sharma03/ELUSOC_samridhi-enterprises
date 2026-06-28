@@ -1,0 +1,52 @@
+name: Pull Request Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-client:
+    name: Verify Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Client Dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Run Lint
+        run: npm run lint
+        working-directory: client
+        continue-on-error: true
+
+      - name: Build Client
+        run: npm run build
+        working-directory: client
+
+  verify-server:
+    name: Verify Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Server Dependencies
+        run: npm ci
+        working-directory: server

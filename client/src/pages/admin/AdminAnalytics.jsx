@@ -8,8 +8,12 @@ import {
   UserPlus,
   ClipboardList,
   IndianRupee,
+  Eye,
+  Sparkles,
+  MousePointerClick,
 } from "lucide-react";
 import { adminGetSalesAnalytics } from "@/store/order/orderSlice";
+import { adminGetRecommendationAnalytics } from "@/store/product/partsSlice";
 import Loader from "../../extras/Loader";
 
 // Indian-rupee formatter shared across the revenue figures on this page.
@@ -35,6 +39,9 @@ const formatDate = (d) =>
     month: "short",
     day: "numeric",
   });
+
+// CTR as a percentage with one decimal (e.g. 0.234 -> "23.4%").
+const formatPct = (ratio) => `${((ratio || 0) * 100).toFixed(1)}%`;
 
 const statusColor = (status) => {
   switch (status) {
@@ -282,9 +289,11 @@ const ChartCard = ({ title, icon: Icon, children, isEmpty, emptyText }) => (
 const AdminAnalytics = () => {
   const dispatch = useDispatch();
   const { salesAnalytics, loading } = useSelector((state) => state.order);
+  const { recommendationAnalytics } = useSelector((state) => state.parts);
 
   useEffect(() => {
     dispatch(adminGetSalesAnalytics());
+    dispatch(adminGetRecommendationAnalytics());
   }, [dispatch]);
 
   // First load — nothing cached yet — show the loader.
@@ -296,6 +305,16 @@ const AdminAnalytics = () => {
   const topProducts = salesAnalytics?.topProducts || [];
   const customerGrowth = salesAnalytics?.customerGrowth || [];
   const recentOrders = salesAnalytics?.recentOrders || [];
+
+  // Recommendation & engagement analytics (issue #113 admin analytics).
+  const mostViewed = recommendationAnalytics?.mostViewed || [];
+  const mostRecommended = recommendationAnalytics?.mostRecommended || [];
+  const recoTotals = recommendationAnalytics?.totals || {
+    totalViews: 0,
+    totalImpressions: 0,
+    totalClicks: 0,
+    overallCtr: 0,
+  };
 
   // A month-series counts as "empty" only when every value is zero, so a brand
   // new store with no paid orders shows a friendly message, not a flat chart.
@@ -398,6 +417,148 @@ const AdminAnalytics = () => {
             </table>
           </div>
         </ChartCard>
+
+        {/* ============ Recommendation & Engagement Analytics (#113) ============ */}
+        <div className="mt-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-1">
+            Recommendation &amp; Engagement
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            How products are viewed and how the recommendation rows are
+            performing.
+          </p>
+
+          {/* Summary stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium">Total Product Views</span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {new Intl.NumberFormat("en-IN").format(recoTotals.totalViews)}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  Recommendation Impressions
+                </span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {new Intl.NumberFormat("en-IN").format(
+                  recoTotals.totalImpressions
+                )}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <MousePointerClick className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  Recommendation CTR
+                </span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {formatPct(recoTotals.overallCtr)}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {new Intl.NumberFormat("en-IN").format(recoTotals.totalClicks)}{" "}
+                clicks /{" "}
+                {new Intl.NumberFormat("en-IN").format(
+                  recoTotals.totalImpressions
+                )}{" "}
+                impressions
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Most Viewed Products */}
+            <ChartCard
+              title="Most Viewed Products"
+              icon={Eye}
+              isEmpty={mostViewed.length === 0}
+              emptyText="No product views recorded yet."
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b border-gray-200">
+                      <th className="py-2 pr-4 font-medium">Product</th>
+                      <th className="py-2 pr-4 font-medium">Category</th>
+                      <th className="py-2 pr-4 font-medium text-right">Views</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mostViewed.map((p) => (
+                      <tr
+                        key={p._id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="py-2 pr-4 font-medium text-gray-800 capitalize">
+                          {p.name}
+                        </td>
+                        <td className="py-2 pr-4 text-gray-500">
+                          {p.category}
+                        </td>
+                        <td className="py-2 pr-4 text-right font-semibold text-gray-800">
+                          {new Intl.NumberFormat("en-IN").format(p.viewCount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ChartCard>
+
+            {/* Most Recommended Products (with per-product CTR) */}
+            <ChartCard
+              title="Most Recommended Products"
+              icon={Sparkles}
+              isEmpty={mostRecommended.length === 0}
+              emptyText="No recommendation impressions recorded yet."
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b border-gray-200">
+                      <th className="py-2 pr-4 font-medium">Product</th>
+                      <th className="py-2 pr-4 font-medium text-right">
+                        Shown
+                      </th>
+                      <th className="py-2 pr-4 font-medium text-right">
+                        Clicks
+                      </th>
+                      <th className="py-2 pr-4 font-medium text-right">CTR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mostRecommended.map((p) => (
+                      <tr
+                        key={p._id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="py-2 pr-4 font-medium text-gray-800 capitalize">
+                          {p.name}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-gray-700">
+                          {new Intl.NumberFormat("en-IN").format(p.impressions)}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-gray-700">
+                          {new Intl.NumberFormat("en-IN").format(p.clicks)}
+                        </td>
+                        <td className="py-2 pr-4 text-right font-semibold text-gray-800">
+                          {formatPct(p.ctr)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ChartCard>
+          </div>
+        </div>
       </div>
     </div>
   );

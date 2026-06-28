@@ -66,10 +66,27 @@ const WishlistPage = () => {
           </p>
           <Link
             to="/products"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 mb-10"
           >
             Browse Products
           </Link>
+
+          <div className="w-full">
+            <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+              Explore Popular Categories
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {["Lighting Products", "Filters & Horn", "Gaskets", "Rear View Mirror", "Switches / Locks"].map((cat) => (
+                <Link
+                  key={cat}
+                  to={`/products?search=${encodeURIComponent(cat)}`}
+                  className="px-4 py-2 bg-white/60 hover:bg-white text-gray-700 hover:text-blue-600 rounded-full border border-gray-200 shadow-sm hover:shadow transition-all duration-200 text-sm font-medium"
+                >
+                  {cat}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

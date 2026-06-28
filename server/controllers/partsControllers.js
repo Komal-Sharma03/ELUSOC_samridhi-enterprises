@@ -65,6 +65,11 @@ export const getAllParts = catchAsyncErrors(async (req, res) => {
 export const getPartById = catchAsyncErrors(async (req, res, next) => {
   const part = await Part.findById(req.params.id).populate("vehicleCompatibility", "name");
   if (!part) return next(new ErrorHandler("Part not found", 404));
+
+  // Count this as a product view for analytics. Fire-and-forget: a failed
+  // counter update must never break the actual product response.
+  Part.updateOne({ _id: part._id }, { $inc: { viewCount: 1 } }).catch(() => {});
+
   res.status(200).json({ success: true, part });
 });
 
@@ -408,6 +413,139 @@ export const getRecommendedForYou = catchAsyncErrors(async (req, res, next) => {
     personalized: preferredCategories.length > 0,
   });
 });
+
+// Track recommendation impressions — called by the frontend when a set of
+// recommended products is actually shown to a user in a recommendation row.
+// Accepts an array of part IDs and bulk-increments their impression counters.
+// Validates IDs, caps the batch size, and never throws on bad input so the
+// tracking call can't disrupt the page.
+export const trackRecommendationImpressions = catchAsyncErrors(
+  async (req, res) => {
+    const ids = Array.isArray(req.body?.productIds) ? req.body.productIds : [];
+
+    // Keep only well-formed, unique ObjectIds and cap the batch to a sane size.
+    const validIds = [
+      ...new Set(
+        ids.filter(
+          (id) => typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id)
+        )
+      ),
+    ].slice(0, 50);
+
+    if (validIds.length > 0) {
+      await Part.updateMany(
+        { _id: { $in: validIds } },
+        { $inc: { recommendationImpressions: 1 } }
+      );
+    }
+
+    res.status(200).json({ success: true, tracked: validIds.length });
+  }
+);
+
+// Track a recommendation click — called when a user clicks through to a
+// product from a recommendation row. Increments that product's click counter.
+export const trackRecommendationClick = catchAsyncErrors(async (req, res) => {
+  const { productId } = req.body || {};
+
+  if (typeof productId === "string" && /^[a-fA-F0-9]{24}$/.test(productId)) {
+    await Part.updateOne(
+      { _id: productId },
+      { $inc: { recommendationClicks: 1 } }
+    );
+    return res.status(200).json({ success: true, tracked: true });
+  }
+
+  res.status(200).json({ success: true, tracked: false });
+});
+
+// Admin — recommendation & engagement analytics.
+// Surfaces three things the issue asks for:
+//   - Most viewed products (by viewCount)
+//   - Most recommended products (by recommendationImpressions)
+//   - Recommendation CTR (clicks / impressions), both overall and per product
+// All computed from the lightweight counters on the Part model.
+export const adminGetRecommendationAnalytics = catchAsyncErrors(
+  async (req, res) => {
+    const LIMIT = 8;
+
+    const [mostViewed, mostRecommended, totalsAgg] = await Promise.all([
+      // Most viewed products.
+      Part.find({ viewCount: { $gt: 0 } })
+        .sort({ viewCount: -1 })
+        .limit(LIMIT)
+        .select("name category viewCount images"),
+
+      // Most recommended products (most impressions in recommendation rows),
+      // with per-product CTR included.
+      Part.find({ recommendationImpressions: { $gt: 0 } })
+        .sort({ recommendationImpressions: -1 })
+        .limit(LIMIT)
+        .select(
+          "name category recommendationImpressions recommendationClicks images"
+        ),
+
+      // Catalogue-wide impression / click totals for the overall CTR figure.
+      Part.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalImpressions: { $sum: "$recommendationImpressions" },
+            totalClicks: { $sum: "$recommendationClicks" },
+            totalViews: { $sum: "$viewCount" },
+          },
+        },
+      ]),
+    ]);
+
+    const totals = totalsAgg[0] || {
+      totalImpressions: 0,
+      totalClicks: 0,
+      totalViews: 0,
+    };
+
+    const overallCtr =
+      totals.totalImpressions > 0
+        ? totals.totalClicks / totals.totalImpressions
+        : 0;
+
+    const mostViewedOut = mostViewed.map((p) => ({
+      _id: p._id,
+      name: p.name || "Unknown product",
+      category: p.category,
+      viewCount: p.viewCount || 0,
+      image: p.images?.[0]?.url || "",
+    }));
+
+    const mostRecommendedOut = mostRecommended.map((p) => {
+      const impressions = p.recommendationImpressions || 0;
+      const clicks = p.recommendationClicks || 0;
+      return {
+        _id: p._id,
+        name: p.name || "Unknown product",
+        category: p.category,
+        impressions,
+        clicks,
+        ctr: impressions > 0 ? clicks / impressions : 0,
+        image: p.images?.[0]?.url || "",
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      recommendationAnalytics: {
+        mostViewed: mostViewedOut,
+        mostRecommended: mostRecommendedOut,
+        totals: {
+          totalViews: totals.totalViews || 0,
+          totalImpressions: totals.totalImpressions || 0,
+          totalClicks: totals.totalClicks || 0,
+          overallCtr,
+        },
+      },
+    });
+  }
+);
 
 // Delete review
 export const deleteReview = catchAsyncErrors(async (req, res, next) => {

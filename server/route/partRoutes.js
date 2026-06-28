@@ -12,6 +12,9 @@ import {
   getSimilarParts,
   getFrequentlyBoughtTogether,
   getRecommendedForYou,
+  trackRecommendationImpressions,
+  trackRecommendationClick,
+  adminGetRecommendationAnalytics,
 } from "../controllers/partsControllers.js";
 import auth from "../middleware/auth.js";
 import admin from "../middleware/Admin.js";
@@ -59,6 +62,27 @@ partRouter.get(
   recommendLimiter,
   auth,
   getRecommendedForYou
+);
+
+// Recommendation analytics tracking (lightweight counter bumps).
+partRouter.post(
+  "/recommendations/track-impressions",
+  browseLimiter,
+  trackRecommendationImpressions
+);
+partRouter.post(
+  "/recommendations/track-click",
+  browseLimiter,
+  trackRecommendationClick
+);
+
+// Admin — recommendation & engagement analytics dashboard data.
+partRouter.get(
+  "/admin/recommendation-analytics",
+  recommendLimiter,
+  auth,
+  admin,
+  adminGetRecommendationAnalytics
 );
 partRouter.put(
   "/update/:id",

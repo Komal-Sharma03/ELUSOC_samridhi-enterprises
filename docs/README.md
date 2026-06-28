@@ -14,6 +14,7 @@ implemented in `server/` and `client/`.
 | [Admin Workflows](./ADMIN_WORKFLOWS.md) | Admin/manager operations: users, catalogue, orders & payment verification, coupons, support, analytics |
 | [Workflow Guide](./WORKFLOWS.md) | In-depth breakdown of order processing, concurrency, atomic inventory reservation, stock restoration, payment verification, and status transition guards |
 | [Environment Variables](./ENVIRONMENT.md) | Every backend/frontend env var and where it is used |
+| [Contributor Workflow Guide](./CONTRIBUTING_GUIDE.md) | Dev setup, verification commands (lint/build), branching model, and PR flow |
 
 ## Where other topics live
 

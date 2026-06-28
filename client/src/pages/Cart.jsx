@@ -19,14 +19,18 @@ const Cart = () => {
   const { cart, loading, error, warnings } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
 
-  useEffect(() => {
+  const handleProceedToCheckout = () => {
     if (!isAuthenticated) {
-      toast.error("Please log in to view your cart");
-      navigate("/login");
-      return;
+      toast.info("Please log in to proceed to checkout");
+      navigate("/login?redirect=checkout");
+    } else {
+      navigate("/checkout");
     }
+  };
+
+  useEffect(() => {
     dispatch(fetchCart());
-  }, [dispatch, isAuthenticated, navigate]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -194,7 +198,7 @@ const Cart = () => {
             whileTap={{ scale: 0.98 }}
           >
             <Link
-              to="/"
+              to="/products"
               className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform transition-all duration-300 text-lg group"
             >
               <span>Explore Products</span>
@@ -212,6 +216,28 @@ const Cart = () => {
                 />
               </svg>
             </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+            className="mt-12 w-full max-w-lg"
+          >
+            <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+              Or shop by category
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {["Lighting Products", "Filters & Horn", "Gaskets", "Rear View Mirror", "Switches / Locks"].map((cat) => (
+                <Link
+                  key={cat}
+                  to={`/products?search=${encodeURIComponent(cat)}`}
+                  className="px-4 py-2 bg-white/60 hover:bg-white text-gray-700 hover:text-blue-600 rounded-full border border-gray-200 shadow-sm hover:shadow transition-all duration-200 text-sm font-medium"
+                >
+                  {cat}
+                </Link>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       </div>
@@ -480,7 +506,7 @@ const Cart = () => {
                   whileTap={{ scale: 0.98 }}
                   className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 group"
                   disabled={cart.items.length === 0}
-                  onClick={() => navigate("/checkout")}
+                  onClick={handleProceedToCheckout}
                 >
                   <span>Proceed to Checkout</span>
                   <svg

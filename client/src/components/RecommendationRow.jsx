@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 
-const RecommendationRow = ({ title, description, icon, products }) => {
+const RecommendationRow = ({ title, description, icon, products, onProductClick }) => {
   if (!products || products.length === 0) return null;
 
   return (
@@ -28,7 +28,10 @@ const RecommendationRow = ({ title, description, icon, products }) => {
               key={item._id}
               to={`/products/${item._id}`}
               className="flex-shrink-0 w-56"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => {
+                if (onProductClick) onProductClick(item._id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
               <motion.div
                 whileHover={{ y: -4 }}
