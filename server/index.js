@@ -24,6 +24,18 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const getTrustProxyConfig = (value) => {
+  if (value === "true") return true;
+  if (!Number.isNaN(Number(value))) return Number(value);
+  return value;
+};
+
+// Set TRUST_PROXY when deployed behind a trusted reverse proxy/load balancer so
+// req.ip reflects the client IP used by the rate limiter.
+if (process.env.TRUST_PROXY) {
+  app.set("trust proxy", getTrustProxyConfig(process.env.TRUST_PROXY));
+}
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_WWW_URL,

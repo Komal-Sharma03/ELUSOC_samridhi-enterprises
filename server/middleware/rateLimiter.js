@@ -1,12 +1,29 @@
 import catchAsyncErrors from "./catchAsyncErrors.js";
 import ErrorHandler from "../utils/errorHandler.js";
 
-// Basic in-memory cache for IP request tracking.
+// In-memory cache for IP request tracking. This store is process-local, so limits
+// are not shared across multiple server instances or deployments.
 const ipRequestStore = new Map();
+
+const pruneExpiredEntries = (now) => {
+  for (const [ip, data] of ipRequestStore.entries()) {
+    if (now > data.resetTime) {
+      ipRequestStore.delete(ip);
+    }
+  }
+};
+
+const setRateLimitHeaders = (res, limit, remaining, resetTime) => {
+  res.setHeader("X-RateLimit-Limit", limit);
+  res.setHeader("X-RateLimit-Remaining", Math.max(0, remaining));
+  res.setHeader("X-RateLimit-Reset", Math.ceil(resetTime / 1000));
+};
 
 /**
  * Custom lightweight rate limiting middleware to prevent API abuse and brute-force.
- * Uses a sliding window based on simple interval sweeps.
+ * Uses an in-memory, process-local fixed window per client IP.
+ * If the app runs behind a reverse proxy, configure Express `trust proxy` so
+ * req.ip resolves to the real client IP.
  *
  * @param {Object} options Configuration options
  * @param {number} options.windowMs Time window in milliseconds (default 15 minutes)
@@ -18,44 +35,26 @@ const rateLimiter = (options = {}) => {
   const max = options.max || 100;
   const message = options.message || "Too many requests from this IP, please try again later.";
 
-  // Periodic cleanup of expired cache entries to prevent memory leaks
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, data] of ipRequestStore.entries()) {
-      if (now > data.resetTime) {
-        ipRequestStore.delete(ip);
-      }
-    }
-  }, windowMs);
-
   return catchAsyncErrors(async (req, res, next) => {
-    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ip = req.ip || req.socket.remoteAddress;
     const now = Date.now();
+    pruneExpiredEntries(now);
 
-    if (!ipRequestStore.has(ip)) {
-      ipRequestStore.set(ip, {
-        count: 1,
+    let clientData = ipRequestStore.get(ip);
+
+    if (!clientData) {
+      clientData = {
+        count: 0,
         resetTime: now + windowMs,
-      });
-      return next();
-    }
-
-    const clientData = ipRequestStore.get(ip);
-
-    if (now > clientData.resetTime) {
-      clientData.count = 1;
-      clientData.resetTime = now + windowMs;
-      return next();
+      };
+      ipRequestStore.set(ip, clientData);
     }
 
     clientData.count += 1;
-
-    // Set rate limit headers
-    res.setHeader("X-RateLimit-Limit", max);
-    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - clientData.count));
-    res.setHeader("X-RateLimit-Reset", new Date(clientData.resetTime).toUTCString());
+    setRateLimitHeaders(res, max, max - clientData.count, clientData.resetTime);
 
     if (clientData.count > max) {
+      res.setHeader("Retry-After", Math.ceil((clientData.resetTime - now) / 1000));
       return next(new ErrorHandler(message, 429));
     }
 
@@ -63,4 +62,5 @@ const rateLimiter = (options = {}) => {
   });
 };
 
+export { ipRequestStore };
 export default rateLimiter;
