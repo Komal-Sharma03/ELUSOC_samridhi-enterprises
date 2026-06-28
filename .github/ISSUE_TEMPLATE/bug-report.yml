@@ -1,0 +1,60 @@
+name: Bug Report
+description: File a structured report to help us find and fix bugs
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you did and what went wrong...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this behavior?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What did you expect to happen instead?
+    validations:
+      required: true
+  - type: input
+    id: environment-os
+    attributes:
+      label: Operating System / Platform
+      description: e.g. Windows 11, macOS Sequoia, iOS 18, Android 15
+      placeholder: Windows 11
+    validations:
+      required: false
+  - type: input
+    id: environment-browser
+    attributes:
+      label: Browser
+      description: e.g. Chrome, Safari, Firefox, Edge
+      placeholder: Chrome
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, logs, or screenshots about the problem here.
+    validations:
+      required: false
