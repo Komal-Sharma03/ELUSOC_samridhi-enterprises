@@ -23,6 +23,74 @@ import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../../components/SEO";
 import RecommendationRow from "../../components/RecommendationRow";
 import { fetchParts } from "../../store/product/partsSlice";
+
+
+const ProductCarouselSection = ({ title, description, iconPath, products, delay = 0.4 }) => {
+  if (!products || products.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay }}
+      className="mt-12 bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden"
+    >
+      <div className="p-8 lg:p-12">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-3">
+          <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath} />
+          </svg>
+          {title}
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">{description}</p>
+
+        <div className="flex gap-5 overflow-x-auto pb-4 -mx-2 px-2">
+          {products.map((item) => (
+            <Link key={item._id} to={`/products/${item._id}`} className="flex-shrink-0 w-56">
+              <motion.div
+                whileHover={{ y: -4 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+              >
+                <div className="relative">
+                  <img
+                    src={item.images?.[0]?.url || "/images/placeholder.jpg"}
+                    alt={item.name || "Product"}
+                    loading="lazy"
+                    className="w-full h-40 object-cover"
+                  />
+                  {item.bestseller && (
+                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Bestseller
+                    </span>
+                  )}
+                </div>
+                <div className="p-4 space-y-2">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 capitalize min-h-[3rem]">
+                    {item.name || "Unknown Product"}
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                      ₹{item.price?.toLocaleString() || "0"}
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStockBadge(item.stock).badgeCls}`}>
+                      {getStockBadge(item.stock).label}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    {item.category}
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
 const SingleProduct = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -327,12 +395,13 @@ const SingleProduct = () => {
           transition={{ duration: 0.6 }}
           className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden"
         >
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7 }}
-              className="relative p-8 lg:p-12 bg-gradient-to-br from-gray-50 to-white"
+              className="relative p-8 lg:p-12 bg-gradient-to-br from-gray-50 to-white flex flex-col items-center"
             >
              {part.bestseller && (
                 <motion.div
@@ -343,105 +412,72 @@ const SingleProduct = () => {
                 >
                   Bestseller
                 </ motion.div>
-              )}{/* ==================== AI RECOMMENDATIONS SECTIONS ==================== */}
-        <RecommendationRow
-          title="Similar Products"
-          description="Related parts in the same category and compatible with similar vehicles."
-          icon={
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          }
-          products={similarParts}
-          onProductClick={handleRecommendationClick}
-        />
-
-        <RecommendationRow
-          title="Frequently Bought Together"
-          description="Customers who purchased this piece also bundled these highly compatible components together."
-          icon={
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-          }
-          products={frequentlyBought}
-          onProductClick={handleRecommendationClick}
-        />
-
-        <RecommendationRow
-          title="Recommended For You"
-          description="Personalized updates matched dynamically using your viewing behavior metrics."
-          icon={
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-          }
-          products={recommendedForYou}
-          onProductClick={handleRecommendationClick}
-        />
-
-              <div className="flex justify-center mb-8">
-                <motion.div
-                  className="relative cursor-pointer group"
-                  onClick={() => setIsZoomed(!isZoomed)}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <img
-                    src={
-                      part.images?.[selectedImage]?.url ||
-                      "/images/placeholder.jpg"
-                    }
-                    alt={part.name || "Product Image"}
-                    className={`w-96 h-96 object-fit rounded-2xl shadow-lg transition-all duration-500 ${
-                      isZoomed ? "w-[30rem] h-[30rem]" : "w-96 h-96"
-                    }`}
-                  />
-                  <div className="absolute inset-0 bg-blue-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"></div>
-                  <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 bg-opacity-80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg
-                      className="w-5 h-5 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                      />
-                    </svg>
-                  </div>
-                </motion.div>
-              </div>
-
-              {part.images?.length > 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="flex justify-center gap-3 overflow-x-auto pb-2"
-                >
-                  {part.images.map((img, index) => (
-                    <motion.img
-                      key={img.public_id || `img-${index}`}
-                      src={img.url || "/images/placeholder.jpg"}
-                      alt={`${part.name || "Product"}-${index}`}
-                      className={`w-20 h-20 object-cover cursor-pointer rounded-xl border-3 transition-all duration-300 ${
-                        selectedImage === index
-                          ? "border-blue-500 shadow-lg shadow-blue-200"
-                          : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
-                      }`}
-                      onClick={() => setSelectedImage(index)}
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                    />
-                  ))}
-                </motion.div>
               )}
-            </motion.div>
+          
+            <div className="flex justify-center mb-8">
+  <motion.div
+    className="relative cursor-pointer group"
+    onClick={() => setIsZoomed(!isZoomed)}
+    whileHover={{ scale: 1.05 }}
+    transition={{ type: "spring", stiffness: 300 }}
+  >
+      <img
+      src={
+        part.images?.[selectedImage]?.url ||
+        "/images/placeholder.jpg"
+      }
+      alt={part.name || "Product Image"}
+      className={`w-96 h-96 object-cover rounded-2xl shadow-lg transition-all duration-500 ${
+        isZoomed ? "w-[30rem] h-[30rem]" : "w-96 h-96"
+      }`}
+    /> 
 
+    <div className="absolute inset-0 bg-blue-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"></div>
+
+    <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 bg-opacity-80 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+      <svg
+        className="w-5 h-5 text-blue-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+        />
+      </svg>
+    </div>
+  </motion.div>
+</div>
+
+{part.images?.length > 1 && (
+ 
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3 }}
+    className="flex justify-center gap-3 overflow-x-auto pb-2"
+  >
+    {part.images.map((img, index) => (
+      <motion.img
+        key={img.public_id || `img-${index}`}
+        src={img.url || "/images/placeholder.jpg"}
+        alt={`${part.name || "Product"}-${index}`}
+        className={`w-20 h-20 object-cover cursor-pointer rounded-xl border-2 transition-all duration-300 ${
+          selectedImage === index
+            ? "border-blue-500 shadow-lg shadow-blue-200"
+            : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+        }`}
+        onClick={() => setSelectedImage(index)}
+        whileHover={{ scale: 1.1, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+      />
+    ))}
+  </motion.div>
+)}
+</motion.div>
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -682,88 +718,33 @@ const SingleProduct = () => {
           </div>
         </motion.div>
 
-        {similarParts && similarParts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-12 bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden"
-          >
-            <div className="p-8 lg:p-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-3">
-                <svg
-                  className="w-8 h-8 text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-                Similar Products
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-8">
-                Related parts in the same category and compatible with similar
-                vehicles.
-              </p>
-
-              <div className="flex gap-5 overflow-x-auto pb-4 -mx-2 px-2">
-                {similarParts.map((item) => (
-                  <Link
-                    key={item._id}
-                    to={`/products/${item._id}`}
-                    className="flex-shrink-0 w-56"
-                  >
-                    <motion.div
-                      whileHover={{ y: -4 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      className="h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200 overflow-hidden"
-                    >
-                      <div className="relative">
-                        <img
-                          src={item.images?.[0]?.url || "/images/placeholder.jpg"}
-                          alt={item.name || "Product"}
-                          loading="lazy"
-                          className="w-full h-40 object-cover"
-                        />
-                        {item.bestseller && (
-                          <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            Bestseller
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-4 space-y-2">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 capitalize min-h-[3rem]">
-                          {item.name || "Unknown Product"}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                            ₹{item.price?.toLocaleString() || "0"}
-                          </span>
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              getStockBadge(item.stock).badgeCls
-                            }`}
-                          >
-                            {getStockBadge(item.stock).label}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {item.category}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+        
+    {similarParts && similarParts.length > 0 && (
+    <ProductCarouselSection
+      title="Similar Products"
+      description="Related parts in the same category and compatible with similar vehicles."
+      iconPath="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      products={similarParts}
+      delay={0.4}
+        
+    />
         )}
 
+    <ProductCarouselSection
+      title="Frequently Bought Together"
+      description="Customers who purchased this piece also bundled these highly compatible components together."
+      iconPath="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+      products={frequentlyBought}
+      delay={0.6}
+    />
+
+    <ProductCarouselSection
+      title="Recommended For You"
+      description="Personalized updates matched dynamically using your viewing behavior metrics."
+      iconPath="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+      products={recommendedForYou}
+      delay={0.8}
+    />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -964,5 +945,6 @@ const SingleProduct = () => {
     </div>
   );
 };
+
 
 export default SingleProduct;
