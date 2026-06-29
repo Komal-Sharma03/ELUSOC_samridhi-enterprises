@@ -33,7 +33,7 @@ const setRateLimitHeaders = (res, limit, remaining, resetTime) => {
 const rateLimiter = (options = {}) => {
   const windowMs = options.windowMs || 15 * 60 * 1000; // 15 mins
   const max = options.max || 100;
-  const message = options.message || "Too many requests from this IP, please try again later.";
+  const message = options.message || "Too many requests. Please try again later.";
 
   return catchAsyncErrors(async (req, res, next) => {
     const ip = req.ip || req.socket.remoteAddress;
@@ -62,5 +62,75 @@ const rateLimiter = (options = {}) => {
   });
 };
 
+// Per-endpoint/IP (and optional per-email) throttle using the same in-memory store.
+// This keeps logic consistent across the codebase and avoids global limiter conflicts.
+const createAuthOtpLimiter = (options = {}) => {
+  const windowMs = options.windowMs;
+  const maxByIp = options.maxByIp;
+  const maxByEmail = options.maxByEmail;
+  const message = options.message || "Too many requests. Please try again later.";
+  const enableEmail = Boolean(options.enableEmail);
+  const logInDev = Boolean(options.logInDev);
+
+  if (!windowMs || !maxByIp) {
+    throw new Error("createAuthOtpLimiter requires windowMs and maxByIp");
+  }
+
+  return catchAsyncErrors(async (req, res, next) => {
+    const now = Date.now();
+    pruneExpiredEntries(now);
+
+    const ip = req.ip || req.socket.remoteAddress;
+    const email = req?.body?.email;
+
+    // IP-based limiting
+    const ipKey = `ip:${ip}`;
+    let ipData = ipRequestStore.get(ipKey);
+    if (!ipData) {
+      ipData = { count: 0, resetTime: now + windowMs };
+      ipRequestStore.set(ipKey, ipData);
+    }
+    ipData.count += 1;
+    setRateLimitHeaders(res, maxByIp, maxByIp - ipData.count, ipData.resetTime);
+
+    if (ipData.count > maxByIp) {
+      res.setHeader("Retry-After", Math.ceil((ipData.resetTime - now) / 1000));
+      if (logInDev && process.env.NODE_ENV === "development") {
+        console.warn("[rate-limit] ip", { endpoint: req.originalUrl, ip });
+      }
+      return next(new ErrorHandler(message, 429));
+    }
+
+    // Optional email-based limiting
+    if (enableEmail && typeof email === "string" && email.trim()) {
+      const emailKey = `email:${email.trim().toLowerCase()}`;
+      const maxEmail = Number(maxByEmail) || maxByIp;
+
+      let emailData = ipRequestStore.get(emailKey);
+      if (!emailData) {
+        emailData = { count: 0, resetTime: now + windowMs };
+        ipRequestStore.set(emailKey, emailData);
+      }
+
+      emailData.count += 1;
+      if (emailData.count > maxEmail) {
+        res.setHeader("Retry-After", Math.ceil((emailData.resetTime - now) / 1000));
+        if (logInDev && process.env.NODE_ENV === "development") {
+          console.warn("[rate-limit] email", {
+            endpoint: req.originalUrl,
+            email: email.trim().toLowerCase(),
+          });
+        }
+        return next(new ErrorHandler(message, 429));
+      }
+    }
+
+    next();
+  });
+};
+
 export { ipRequestStore };
+export { createAuthOtpLimiter };
+
 export default rateLimiter;
+
