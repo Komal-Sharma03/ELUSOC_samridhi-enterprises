@@ -75,6 +75,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    forgot_password_failedAttempts: {
+      type: Number,
+      default: 0,
+    },
+    forgot_password_lockUntil: {
+      type: Date,
+      default: null,
+    },
     resetPasswordToken: {
       type: String,
       default: null,
