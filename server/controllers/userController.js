@@ -9,6 +9,9 @@ import generatedOtp from "../utils/generatedOtp.js";
 import sendToken from "../utils/jwtToken.js";
 import forgotPasswordTemplate from "../template/forgotPasswordTemplate.js";
 
+const OTP_MODE = process.env.OTP_MODE || "production";
+const shouldLogOtp = OTP_MODE === "dev";
+
 export const registerUser = catchAsyncErrors(async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -27,8 +30,9 @@ export const registerUser = catchAsyncErrors(async (req, res, next) => {
     const otpExpiry = new Date();
     otpExpiry.setMinutes(otpExpiry.getMinutes() + 15);
 
-    // TEMPORARY: Log the OTP to console so you can test without a real Brevo API Key!
-    console.log(`\n=== VERIFICATION OTP FOR ${email} IS: ${otp} ===\n`);
+    if (shouldLogOtp) {
+      console.log(`\n=== VERIFICATION OTP FOR ${email} IS: ${otp} ===\n`);
+    }
 
     const emailResponse = await sendEmail({
       sendTo: email,
@@ -96,7 +100,9 @@ export const verifyEmailOtp = catchAsyncErrors(async (req, res, next) => {
       user.login_expiry = newExpiry;
       await user.save();
 
-      return next(new ErrorHandler("OTP expired. A new OTP has been sent to your email.", 410));
+      return next(
+        new ErrorHandler("OTP expired. A new OTP has been sent to your email.", 410)
+      );
     }
 
     if (otp !== user.login_otp) {
@@ -115,7 +121,9 @@ export const verifyEmailOtp = catchAsyncErrors(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    return next(new ErrorHandler(error.message || "An error occurred while verifying OTP.", 500));
+    return next(
+      new ErrorHandler(error.message || "An error occurred while verifying OTP.", 500)
+    );
   }
 });
 
@@ -133,8 +141,9 @@ export const resendOtp = catchAsyncErrors(async (req, res, next) => {
     const newExpiry = new Date();
     newExpiry.setMinutes(newExpiry.getMinutes() + 15);
 
-    // TEMPORARY: Log the OTP to console so you can test without a real Brevo API Key!
-    console.log(`\n=== RESEND OTP FOR ${email} IS: ${newOtp} ===\n`);
+    if (shouldLogOtp) {
+      console.log(`\n=== RESEND OTP FOR ${email} IS: ${newOtp} ===\n`);
+    }
 
     const emailResponse = await sendEmail({
       sendTo: email,
@@ -174,7 +183,9 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (user.status !== "Active") {
-    return next(new ErrorHandler("Your account is not active. Please contact the admin.", 400));
+    return next(
+      new ErrorHandler("Your account is not active. Please contact the admin.", 400)
+    );
   }
 
   // Account lockout: configurable threshold + duration (defaults: 5 attempts, 15 min).
@@ -348,8 +359,9 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const otp = generatedOtp();
     const expireTime = new Date(new Date().getTime() + 10 * 60 * 1000);
 
-    // TEMPORARY: Log the OTP to console so you can test without a real Brevo API Key!
-    console.log(`\n=== FORGOT PASSWORD OTP FOR ${email} IS: ${otp} ===\n`);
+    if (shouldLogOtp) {
+      console.log(`\n=== FORGOT PASSWORD OTP FOR ${email} IS: ${otp} ===\n`);
+    }
 
     const update = await UserModel.findByIdAndUpdate(user._id, {
       forgot_password_otp: otp,
@@ -421,7 +433,9 @@ export const verifyOtp = catchAsyncErrors(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    return next(new ErrorHandler(error.message || "An error occurred while verifying OTP.", 500));
+    return next(
+      new ErrorHandler(error.message || "An error occurred while verifying OTP.", 500)
+    );
   }
 });
 
@@ -430,7 +444,12 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     const { email, newPassword, confirmPassword } = req.body;
 
     if (!email || !newPassword || !confirmPassword) {
-      return next(new ErrorHandler("Please provide required fields: email, newPassword, and confirmPassword.", 400));
+      return next(
+        new ErrorHandler(
+          "Please provide required fields: email, newPassword, and confirmPassword.",
+          400
+        )
+      );
     }
 
     if (newPassword !== confirmPassword) {
@@ -468,7 +487,9 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    return next(new ErrorHandler(error.message || "An error occurred while updating the password.", 500));
+    return next(
+      new ErrorHandler(error.message || "An error occurred while updating the password.", 500)
+    );
   }
 });
 
@@ -489,7 +510,9 @@ export const getUserDetails = catchAsyncErrors(async (req, res, next) => {
       user,
     });
   } catch (error) {
-    return next(new ErrorHandler(error.message || "Server error while fetching user details", 500));
+    return next(
+      new ErrorHandler(error.message || "Server error while fetching user details", 500)
+    );
   }
 });
 
@@ -513,7 +536,12 @@ export const updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     if (avatar) {
       const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!validImageTypes.includes(avatar.mimetype)) {
-        return next(new ErrorHandler("Invalid image type. Only JPEG, PNG, and GIF are allowed.", 400));
+        return next(
+          new ErrorHandler(
+            "Invalid image type. Only JPEG, PNG, and GIF are allowed.",
+            400
+          )
+        );
       }
 
       const user = await UserModel.findById(userId);
@@ -550,11 +578,6 @@ export const updateUserDetails = catchAsyncErrors(async (req, res, next) => {
       message: "User details updated successfully",
       error: false,
       success: true,
-      // Return the updated user under `user` (matching the login and /me
-      // response shape) so the client can refresh its auth state without a
-      // re-login. `data` is kept for backward compatibility with any existing
-      // consumer. No new token is issued: the JWT is keyed on the user id,
-      // which never changes here, so the current token stays valid.
       user: updateUser,
       data: updateUser,
     });
@@ -637,7 +660,12 @@ export const updateUserRole = catchAsyncErrors(async (req, res, next) => {
     const { email, role } = req.body;
 
     if (!role || !["USER", "ADMIN", "MANAGER"].includes(role)) {
-      return next(new ErrorHandler("Invalid role. Role must be either 'USER', 'MANAGER', or 'ADMIN'.", 400));
+      return next(
+        new ErrorHandler(
+          "Invalid role. Role must be either 'USER', 'MANAGER', or 'ADMIN'.",
+          400
+        )
+      );
     }
 
     const user = await UserModel.findOne({ email });
@@ -795,3 +823,4 @@ export const updateUserStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Server error", 500));
   }
 });
+
