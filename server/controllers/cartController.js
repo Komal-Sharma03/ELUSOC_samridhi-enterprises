@@ -4,6 +4,12 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import mongoose from "mongoose";
 
+/*
+  NOTE: getCart recalculates in-memory only and avoids unnecessary DB writes.
+*/
+
+
+
 const getOrCreateCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId });
   if (!cart) {
@@ -101,11 +107,79 @@ export const syncCart = catchAsyncErrors(async (req, res) => {
   });
 });
 
+const recalculateCart = ({ populatedItems }) => {
+  // Returns in-memory adjusted items + warnings and a boolean indicating
+  // whether we must persist changes to DB.
+  const warnings = [];
+  const adjustedItems = [];
+
+  let removedItems = false;
+  let quantityChangedAny = false;
+  let priceChangedAny = false;
+
+  for (const item of populatedItems) {
+    const part = item.part;
+
+    // Underlying part was deleted/unpopulated.
+    if (part === null || part === undefined) {
+      removedItems = true;
+      continue;
+    }
+
+    // Stock-out -> remove from cart.
+    if (part.stock <= 0) {
+      removedItems = true;
+      warnings.push(`${part.name} is out of stock and has been removed from your cart.`);
+      continue;
+    }
+
+    const requestedQty = item.quantity;
+    const currentUnitPrice = part.price;
+
+    let finalQty = requestedQty;
+    if (part.stock < requestedQty) {
+      finalQty = part.stock;
+      quantityChangedAny = true;
+      warnings.push(`Quantity for ${part.name} has been adjusted to ${part.stock} due to limited stock.`);
+    }
+
+    // Compare stored unit price (based on stored total / quantity) with current unit price.
+    const storedUnitPrice =
+      requestedQty > 0 ? item.price / requestedQty : currentUnitPrice;
+
+    const storedPaise = Math.round(storedUnitPrice * 100);
+    const currentPaise = Math.round(currentUnitPrice * 100);
+
+    if (storedPaise !== currentPaise) {
+      priceChangedAny = true;
+      warnings.push(
+        `Price for ${part.name} has changed from ₹${storedUnitPrice.toLocaleString("en-IN")} to ₹${currentUnitPrice.toLocaleString("en-IN")}.`
+      );
+    }
+
+    // Only mutate if needed.
+    const expectedPrice = currentUnitPrice * finalQty;
+    if (finalQty !== requestedQty || expectedPrice !== item.price) {
+      item.quantity = finalQty;
+      item.price = expectedPrice;
+    }
+
+    adjustedItems.push(item);
+  }
+
+  const recomputedTotal = adjustedItems.reduce((sum, i) => sum + i.price, 0);
+  const needsSave = removedItems || quantityChangedAny || priceChangedAny;
+
+  return { warnings, adjustedItems, recomputedTotal, needsSave };
+};
+
+
 export const getCart = catchAsyncErrors(async (req, res, next) => {
   let cart = await Cart.findOne({ user: req.user._id }).populate(
     "items.part",
     "name price images stock"
   );
+
   if (!cart) {
     cart = await Cart.create({
       user: req.user._id,
@@ -115,45 +189,25 @@ export const getCart = catchAsyncErrors(async (req, res, next) => {
     return res.status(200).json({ success: true, warnings: [], cart });
   }
 
-  // 1. Filter out items where the underlying part was deleted
-  cart.items = cart.items.filter(
-    (item) => item.part !== null && item.part !== undefined
-  );
+  const populatedItems = Array.isArray(cart.items) ? cart.items : [];
+  const {
+    warnings,
+    adjustedItems,
+    recomputedTotal,
+    needsSave,
+  } = recalculateCart({ populatedItems });
 
-  // 2. Validate and adjust quantities based on available stock, building warnings list
-  const warnings = [];
-  const adjustedItems = [];
+  // Apply in-memory changes regardless; we persist only if necessary.
+  cart.items = adjustedItems;
+  cart.total = recomputedTotal;
 
-  for (const item of cart.items) {
-    const part = item.part;
-    if (part.stock <= 0) {
-      warnings.push(`${part.name} is out of stock and has been removed from your cart.`);
-    } else {
-      const storedUnitPrice = item.quantity > 0 ? item.price / item.quantity : part.price;
-      const currentUnitPrice = part.price;
-      
-      let finalQuantity = item.quantity;
-      if (part.stock < item.quantity) {
-        warnings.push(`Quantity for ${part.name} has been adjusted to ${part.stock} due to limited stock.`);
-        finalQuantity = part.stock;
-      }
-      
-      if (Math.round(storedUnitPrice * 100) !== Math.round(currentUnitPrice * 100)) {
-        warnings.push(`Price for ${part.name} has changed from ₹${storedUnitPrice.toLocaleString("en-IN")} to ₹${currentUnitPrice.toLocaleString("en-IN")}.`);
-      }
-      
-      item.quantity = finalQuantity;
-      item.price = currentUnitPrice * finalQuantity;
-      adjustedItems.push(item);
-    }
+  if (needsSave) {
+    await cart.save();
   }
 
-  cart.items = adjustedItems;
-  cart.total = cart.items.reduce((sum, item) => sum + item.price, 0);
-  await cart.save();
-
-  res.status(200).json({ success: true, warnings, cart });
+  return res.status(200).json({ success: true, warnings, cart });
 });
+
 
 export const updateCartItem = catchAsyncErrors(async (req, res, next) => {
   const { quantity } = req.body;
